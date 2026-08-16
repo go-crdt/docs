@@ -566,6 +566,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#a-second-summary-for-utf-16-offsets" class="md-nav__link">
+    <span class="md-ellipsis">
+      A second summary, for UTF-16 offsets
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -771,6 +780,15 @@
   <a href="#an-index-over-the-runs" class="md-nav__link">
     <span class="md-ellipsis">
       An index over the runs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-second-summary-for-utf-16-offsets" class="md-nav__link">
+    <span class="md-ellipsis">
+      A second summary, for UTF-16 offsets
     </span>
   </a>
   
@@ -1324,9 +1342,131 @@ here: no per-run node, a depth of four rather than seventeen, and iteration from
 the leaves. It costs the pointer identity of a block, which the mark, the
 per-site index and every walk in <code>text.go</code> are written in terms of. That is the
 next thing to measure, not something to guess at.</p>
+<h3 id="a-second-summary-for-utf-16-offsets">A second summary, for UTF-16 offsets<a class="headerlink" href="#a-second-summary-for-utf-16-offsets" title="Permanent link">&para;</a></h3>
+<p>Addressing the document in UTF-16 code units means turning a count of units into
+a count of characters, and the obvious way to do that is to walk the document
+counting. That is O(n) per keystroke, so the index carries a second summary
+instead — the visible characters of a subtree that take two code units, beside
+the count of visible characters it already carried — and a conversion becomes a
+descent.</p>
+<p>The cost was measured before it was decided to keep the summary, because one
+nobody needs is still paid for by everybody. Both builds were run alternately in
+one session on a machine under a load average of nine, so that whatever the
+machine was doing landed on both; <code>benchstat</code>, n=14 on the trace and n=12 on the
+synthetic benchmarks.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>before</th>
+<th>after</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the real trace, replayed</td>
+<td>20.60 ms ± 3%</td>
+<td><strong>20.74 ms ± 1%</strong></td>
+<td>~ (p=0.27)</td>
+</tr>
+<tr>
+<td>the real trace, as a peer's operations</td>
+<td>100.2 ms ± 14%</td>
+<td><strong>104.2 ms ± 14%</strong></td>
+<td>~ (p=0.76)</td>
+</tr>
+<tr>
+<td><code>InsertAtEnd</code></td>
+<td>49.10 ns ± 6%</td>
+<td><strong>48.88 ns ± 16%</strong></td>
+<td>~ (p=0.68)</td>
+</tr>
+<tr>
+<td><code>ApplyRemote</code></td>
+<td>410.4 µs ± 7%</td>
+<td><strong>407.1 µs ± 10%</strong></td>
+<td>~ (p=0.93)</td>
+</tr>
+<tr>
+<td><code>InsertAtStart</code></td>
+<td>199.0 ns ± 2%</td>
+<td><strong>211.9 ns ± 9%</strong></td>
+<td>~ (p=0.07)</td>
+</tr>
+<tr>
+<td><code>ScatteredInsert</code></td>
+<td>1.791 µs ± 7%</td>
+<td><strong>1.903 µs ± 3%</strong></td>
+<td>~ (p=0.07)</td>
+</tr>
+<tr>
+<td><code>SameOriginFlood</code></td>
+<td>1.656 ms ± 9%</td>
+<td><strong>1.702 ms ± 6%</strong></td>
+<td>~ (p=0.44)</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing moved by a distinguishable amount, and the trace — which is ASCII, and
+so should not have moved at all — did not. The two rows that come closest,
+<code>InsertAtStart</code> and <code>ScatteredInsert</code> at about +6% with p=0.07, are the two
+benchmarks that allocate one block per character, which is where the memory
+below is charged rather than the arithmetic.</p>
+<p>The memory is exact, and it is the real cost:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>before</th>
+<th>after</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a block header</td>
+<td>144 B</td>
+<td><strong>160 B</strong></td>
+<td>+16 B</td>
+</tr>
+<tr>
+<td>held on the real trace</td>
+<td>4372 KiB</td>
+<td><strong>4541 KiB</strong></td>
+<td>+3.9%</td>
+</tr>
+<tr>
+<td>per stored character, real trace</td>
+<td>24.56 B</td>
+<td><strong>25.51 B</strong></td>
+<td>+3.9%</td>
+</tr>
+<tr>
+<td><code>MemoryPerCharacter</code>, 10 000 characters in one run</td>
+<td>4.19 B/char</td>
+<td><strong>4.19 B/char</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>The summary is two <code>int32</code>s: the visible supplementary characters below a block,
+and the supplementary characters the block itself holds, deleted ones included.
+Sixteen bytes rather than eight, because the header was 141 bytes in Go's
+144-byte size class with three bytes spare — <em>any</em> field, of any width, takes it
+to the 160-byte class. A single <code>bool</code> would have cost exactly what these two
+counters cost, which is why they are two counters and not a compromise.</p>
+<p>The second of them is what keeps the work off documents with no emoji in them. A
+block that holds no supplementary character answers every question about UTF-16
+units without reading a character, so splitting one or indexing one stays
+arithmetic instead of becoming a scan. And a document with none anywhere
+converts in constant time without touching the index at all, because its rune
+and UTF-16 offsets are equal by construction: <code>InsertAtEndUTF16</code> measures 44.9 ns
+against <code>InsertAtEnd</code>'s 48.9, and 46.5 ns on the same document with one emoji
+added, which is the descent.</p>
 <h2 id="where-the-memory-goes-now">Where the memory goes now<a class="headerlink" href="#where-the-memory-goes-now" title="Permanent link">&para;</a></h2>
 <p>Measured on the real trace: 10 824 blocks holding 182 315 characters, of which
-77 463 are tombstones, in 4.3 MiB.</p>
+77 463 are tombstones, in 4.4 MiB.</p>
 <table>
 <thead>
 <tr>
@@ -1337,7 +1477,7 @@ next thing to measure, not something to guess at.</p>
 <tbody>
 <tr>
 <td>block headers</td>
-<td>~1390 KiB</td>
+<td>~1690 KiB</td>
 </tr>
 <tr>
 <td>text</td>
@@ -1349,7 +1489,7 @@ next thing to measure, not something to guess at.</p>
 </tr>
 </tbody>
 </table>
-<p>The remaining lever is still the block headers, now 144 bytes each.</p>
+<p>The remaining lever is still the block headers, now 160 bytes each.</p>
 <h2 id="complexity">Complexity<a class="headerlink" href="#complexity" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
