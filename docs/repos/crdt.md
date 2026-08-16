@@ -147,4 +147,4 @@ update still in flight cannot resurrect a peer who has gone.
    persists. No transform, because the CRDT converges.
 2. An end-to-end proof with two `js/wasm` clients editing concurrently through
    that server, asserting programmatically that both converge.
-3. Run-length blocks — see [performance](../performance.md).
+3. Run-length blocks — see [performance.md](../performance.md).
