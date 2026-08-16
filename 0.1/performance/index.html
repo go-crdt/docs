@@ -443,6 +443,48 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#measured-against-other-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Measured against other implementations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Measured against other implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#document-size-where-we-do-badly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Document size, where we do badly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-does-not-say" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this does not say
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#synthetic-benchmarks" class="md-nav__link">
     <span class="md-ellipsis">
       Synthetic benchmarks
@@ -501,6 +543,15 @@
   <a href="#deletions-stored-as-stretches" class="md-nav__link">
     <span class="md-ellipsis">
       Deletions stored as stretches
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-snapshot-format-writes-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      The snapshot format writes runs
     </span>
   </a>
   
@@ -593,6 +644,48 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#measured-against-other-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Measured against other implementations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Measured against other implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#document-size-where-we-do-badly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Document size, where we do badly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-does-not-say" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this does not say
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#synthetic-benchmarks" class="md-nav__link">
     <span class="md-ellipsis">
       Synthetic benchmarks
@@ -651,6 +744,15 @@
   <a href="#deletions-stored-as-stretches" class="md-nav__link">
     <span class="md-ellipsis">
       Deletions stored as stretches
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-snapshot-format-writes-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      The snapshot format writes runs
     </span>
   </a>
   
@@ -726,6 +828,10 @@ in 104 852 characters with 77 463 tombstones.</p>
 <td>memory held afterwards</td>
 <td><strong>3.9 MiB</strong> — 22.7 bytes per character including tombstones</td>
 </tr>
+<tr>
+<td>the document encoded</td>
+<td><strong>620 KB</strong> — 5.9 bytes per visible character</td>
+</tr>
 </tbody>
 </table>
 <p>Reproduce it, and check the result against the recorded final text:</p>
@@ -736,6 +842,202 @@ in 104 852 characters with 77 463 tombstones.</p>
 <p>The replay is a correctness test before it is a benchmark: a quarter of a million
 edits at positions a real person chose, with the answer known in advance, plus a
 snapshot round trip and a full reload. CI runs it on every change.</p>
+<h2 id="measured-against-other-implementations">Measured against other implementations<a class="headerlink" href="#measured-against-other-implementations" title="Permanent link">&para;</a></h2>
+<p>The numbers above are ours. Setting them beside the figures other projects
+publish would compare four machines, so the other implementations were run here
+instead: same machine, same trace, same protocol, on 2026-08-16.</p>
+<p>Every implementation is driven the way its own published benchmark drives it,
+and every run rebuilds the document and compares it against the <code>endContent</code>
+recorded in the trace before any time is reported — a replay that produces the
+wrong text fails rather than printing a number. Verification is outside the
+clock. The harness is in <a href="https://github.com/go-crdt/crdt/tree/main/docs/comparison"><code>docs/comparison/</code></a>: one file with one
+timing loop and one adapter per library, so the measurement cannot differ
+between them.</p>
+<p>Apple M4 Max (16 cores, 128 GiB), macOS 26.6.1, Go 1.26.4 <code>darwin/arm64</code>,
+Node v26.4.0. Ten replays of the whole 259 778-edit trace per implementation;
+the median is quoted and the full spread is in the last column.</p>
+<table>
+<thead>
+<tr>
+<th>Implementation</th>
+<th>Runs on</th>
+<th>Replay (median)</th>
+<th>ns/edit</th>
+<th>× ours</th>
+<th>min–max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>diamond-types 1.0.2</td>
+<td>Rust → WebAssembly</td>
+<td><strong>18.4 ms</strong></td>
+<td>71</td>
+<td><strong>0.76×</strong></td>
+<td>17.7–23.8 ms</td>
+</tr>
+<tr>
+<td><strong>go-crdt/crdt 0.4.0</strong></td>
+<td>Go</td>
+<td><strong>24.1 ms</strong></td>
+<td>93</td>
+<td>1.00×</td>
+<td>23.9–24.1 ms</td>
+</tr>
+<tr>
+<td>loro-crdt 1.14.1</td>
+<td>Rust → WebAssembly</td>
+<td>692 ms</td>
+<td>2 662</td>
+<td>28.7×</td>
+<td>573–1007 ms</td>
+</tr>
+<tr>
+<td>yjs 13.6.32</td>
+<td>JavaScript</td>
+<td>3 079 ms</td>
+<td>11 851</td>
+<td>127.6×</td>
+<td>3068–3141 ms</td>
+</tr>
+<tr>
+<td>@automerge/automerge-wasm 1.0.0-preview.0</td>
+<td>Rust → WebAssembly</td>
+<td>8 262 ms</td>
+<td>31 803</td>
+<td>342.5×</td>
+<td>8235–8497 ms</td>
+</tr>
+<tr>
+<td>@automerge/automerge 3.4.1</td>
+<td>Rust → WebAssembly, JS wrapper</td>
+<td>26 492 ms</td>
+<td>101 980</td>
+<td>1098×</td>
+<td>25 660–30 672 ms</td>
+</tr>
+</tbody>
+</table>
+<p><strong>diamond-types is faster than we are</strong>, by a third, and that is the result. It
+is the fastest text CRDT anyone has published and it stays that way here. The
+honest reading of this table is that we are in its range — same order of
+magnitude, same trace, same machine — and ahead of everything else measured.</p>
+<h3 id="document-size-where-we-do-badly">Document size, where we do badly<a class="headerlink" href="#document-size-where-we-do-badly" title="Permanent link">&para;</a></h3>
+<p>Encoding the replayed document:</p>
+<table>
+<thead>
+<tr>
+<th>Implementation</th>
+<th>Encoded document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>diamond-types 1.0.2</td>
+<td>109 KB</td>
+</tr>
+<tr>
+<td>@automerge/automerge 3.4.1</td>
+<td>129 KB</td>
+</tr>
+<tr>
+<td>yjs 13.6.32 (V2 encoding)</td>
+<td>160 KB</td>
+</tr>
+<tr>
+<td>loro-crdt 1.14.1</td>
+<td>251 KB</td>
+</tr>
+<tr>
+<td>yjs 13.6.32 (V1 encoding)</td>
+<td>311 KB</td>
+</tr>
+<tr>
+<td><strong>go-crdt/crdt 0.5.0</strong></td>
+<td><strong>620 KB</strong></td>
+</tr>
+<tr>
+<td><em>go-crdt/crdt 0.4.0, when this was measured</em></td>
+<td><em>2 663 KB</em></td>
+</tr>
+</tbody>
+</table>
+<p>This is what the comparison was for. At 0.4.0 ours was between eight and
+twenty-four times larger than anyone else's, because <code>Snapshot</code> wrote one record
+per character while everyone else writes runs. Version 2 of the format writes
+runs too, which took it to 620 KB — but diamond-types still encodes the same
+document in 109 KB, so the gap is now a factor of six rather than twenty-four,
+and it is still a gap. What remains is that the others also compress the text
+itself; ours is 182 KB of characters written plainly, which already exceeds their
+whole document.</p>
+<h3 id="memory">Memory<a class="headerlink" href="#memory" title="Permanent link">&para;</a></h3>
+<p>Only where it can be read honestly. Yjs is JavaScript, so <code>heapUsed</code> after a
+forced collection is its document; Automerge, Loro and diamond-types keep theirs
+in WebAssembly linear memory, which <code>process.memoryUsage()</code> does not see, so
+there is no figure for them here rather than a bad one.</p>
+<table>
+<thead>
+<tr>
+<th>Implementation</th>
+<th>Held after replay</th>
+<th>Per visible character</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>go-crdt/crdt 0.4.0</strong></td>
+<td><strong>4 034 KiB</strong></td>
+<td><strong>39.4 B</strong></td>
+</tr>
+<tr>
+<td>yjs 13.6.32, <code>gc: true</code> (default)</td>
+<td>5 678 KiB</td>
+<td>55.5 B</td>
+</tr>
+<tr>
+<td>yjs 13.6.32, <code>gc: false</code></td>
+<td>7 573 KiB</td>
+<td>74.0 B</td>
+</tr>
+</tbody>
+</table>
+<p>Per <em>visible</em> character, because that is the only count the two agree on: the
+document ends with 104 852 characters, and we additionally hold 77 463
+tombstones, which is where the 22.7 B/char quoted earlier comes from. Yjs's
+default <code>gc: true</code> discards deleted content, so the <code>gc: false</code> row is the
+closer comparison — and we are below both.</p>
+<p>Ours varied by not one byte across three runs; Yjs's readings spanned 5678–5997
+KiB (<code>gc: true</code>) and 7255–7573 KiB (<code>gc: false</code>).</p>
+<h3 id="what-this-does-not-say">What this does not say<a class="headerlink" href="#what-this-does-not-say" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>These libraries do not all do the same job.</strong> Automerge maintains a whole
+  JSON document with history, rich-text marks and branch metadata; Yjs and Loro
+  carry several shared types. This is a text CRDT. A trace of single-character
+  text edits is the workload they all publish against, but it flatters the
+  implementation that does least.</li>
+<li><strong>Yjs is JavaScript</strong> and the rest are compiled. That it is 128× slower than
+  compiled code on a tight per-character loop is not a defect in Yjs.</li>
+<li>The Yjs figure here is faster than the 5 714 ms dmonad publishes for the same
+  benchmark, on newer hardware and without the update observer his harness
+  registers. Our encoded size for Yjs, 159 929 bytes, matches his published
+  <code>docSize</code> exactly, which is the check that this harness reproduces his.</li>
+<li>Automerge measured <strong>slower</strong> than the 14 326 ms dmonad publishes, on faster
+  hardware. He pins <code>@automerge/automerge@^2.1.10</code> and this is 3.4.1. That
+  difference was not investigated, and no claim of a regression is made from one
+  measurement. The <code>automerge-wasm</code> row is the same trace against Automerge's
+  Rust core with the JavaScript document wrapper removed, which puts about two
+  thirds of the cost in the wrapper.</li>
+<li>Wrapping the whole Yjs replay in a single <code>doc.transact</code> makes it <em>slower</em>,
+  9 406 ms against 3 079 ms, so the per-edit form used here is both what Yjs's
+  own benchmark does and the faster of the two.</li>
+<li>One <code>Automerge.change</code> per edit, rather than one for the trace, costs about
+  101 µs/edit over the first 20 000 edits — Automerge's own benchmark batches,
+  and this is why.</li>
+</ul>
+<p>Reproduce all of it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>docs/comparison<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">CRDT_TRACE</span><span class="o">=</span>…/automerge-paper.json.gz<span class="w"> </span>node<span class="w"> </span>--expose-gc<span class="w"> </span>bench.js<span class="w"> </span>yjs<span class="w"> </span>--runs<span class="w"> </span><span class="m">10</span>
+</code></pre></div>
 <h2 id="synthetic-benchmarks">Synthetic benchmarks<a class="headerlink" href="#synthetic-benchmarks" title="Permanent link">&para;</a></h2>
 <p>On a document of 10 000 characters:</p>
 <table>
@@ -853,6 +1155,28 @@ case: a deletion can only ever <em>extend</em> the record ending where it lands.
 never fill a gap between two records, or lead into one, because a site's
 operations are applied in sequence order — a record whose identities follow this
 deletion's cannot already exist.</p>
+<h3 id="the-snapshot-format-writes-runs">The snapshot format writes runs<a class="headerlink" href="#the-snapshot-format-writes-runs" title="Permanent link">&para;</a></h3>
+<p><code>Snapshot</code> wrote one record per character: identity, clock, origin, the
+character, and its deletion — eight numbers each, twenty-five bytes per visible
+character of a real document. Comparing against other implementations made it
+plain that nobody else pays that.</p>
+<p>Version 2 writes a run at a time — one header for a stretch one site typed
+consecutively, then its text, then the stretches of it that have been deleted —
+because everything about the characters in a run follows from the first one.
+<strong>2 663 KB → 620 KB on the real trace, 25.4 → 5.9 bytes per visible character</strong>,
+and writing it is twelve times faster.</p>
+<p>Version 1 is still read, so a document stored by an older build opens; the test
+for that uses a snapshot produced by the v0.4.0 release rather than one this
+build wrote, because a fixture regenerated by the code it checks proves nothing.</p>
+<p>Two things had to be true for this to work, and one of them was not free. The
+runs written have to be the same on every replica holding the same operations,
+or a snapshot stops being a convergence check. The blocks themselves already
+are — two that continue one another are never adjacent, because a character
+bridging them would need the sequence number the right-hand one already holds —
+but their <em>deletion records</em> are not: cutting a block divides a record, and
+replacing one character's deletion when two replicas delete it at once cuts
+another. Writing them joined hides that. The randomised convergence suite found
+this immediately, by comparing encoded state rather than text.</p>
 <h2 id="where-the-memory-goes-now">Where the memory goes now<a class="headerlink" href="#where-the-memory-goes-now" title="Permanent link">&para;</a></h2>
 <p>Measured on the real trace: 10 824 blocks holding 182 315 characters, of which
 77 463 are tombstones, in 3.9 MiB.</p>
