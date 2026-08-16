@@ -434,27 +434,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-position-mark" class="md-nav__link">
+  <a href="#on-the-trace-everybody-publishes-against" class="md-nav__link">
     <span class="md-ellipsis">
-      The position mark
+      On the trace everybody publishes against
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#indexing-characters-by-sequence-number-rather-than-by-identity" class="md-nav__link">
+  <a href="#synthetic-benchmarks" class="md-nav__link">
     <span class="md-ellipsis">
-      Indexing characters by sequence number rather than by identity
+      Synthetic benchmarks
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-73-bytes-per-character-means" class="md-nav__link">
+  <a href="#what-changed-and-why" class="md-nav__link">
     <span class="md-ellipsis">
-      What 73 bytes per character means
+      What changed, and why
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed, and why">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-position-mark-and-then-a-list-that-walks-both-ways" class="md-nav__link">
+    <span class="md-ellipsis">
+      The position mark, and then a list that walks both ways
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#characters-indexed-by-sequence-number-not-by-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Characters indexed by sequence number, not by identity
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-length-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run-length blocks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waiting-operations-filed-under-what-they-are-waiting-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      Waiting operations filed under what they are waiting for
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-memory-goes-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      Where the memory goes now
     </span>
   </a>
   
@@ -524,27 +575,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-position-mark" class="md-nav__link">
+  <a href="#on-the-trace-everybody-publishes-against" class="md-nav__link">
     <span class="md-ellipsis">
-      The position mark
+      On the trace everybody publishes against
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#indexing-characters-by-sequence-number-rather-than-by-identity" class="md-nav__link">
+  <a href="#synthetic-benchmarks" class="md-nav__link">
     <span class="md-ellipsis">
-      Indexing characters by sequence number rather than by identity
+      Synthetic benchmarks
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-73-bytes-per-character-means" class="md-nav__link">
+  <a href="#what-changed-and-why" class="md-nav__link">
     <span class="md-ellipsis">
-      What 73 bytes per character means
+      What changed, and why
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed, and why">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-position-mark-and-then-a-list-that-walks-both-ways" class="md-nav__link">
+    <span class="md-ellipsis">
+      The position mark, and then a list that walks both ways
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#characters-indexed-by-sequence-number-not-by-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Characters indexed by sequence number, not by identity
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-length-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run-length blocks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#waiting-operations-filed-under-what-they-are-waiting-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      Waiting operations filed under what they are waiting for
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-memory-goes-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      Where the memory goes now
     </span>
   </a>
   
@@ -575,101 +677,175 @@
 
 
 <h1 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h1>
-<p>Measured, not estimated. Apple M4 Max, Go 1.26.4, <code>darwin/arm64</code>, on a document
-of 10 000 characters:</p>
+<h2 id="on-the-trace-everybody-publishes-against">On the trace everybody publishes against<a class="headerlink" href="#on-the-trace-everybody-publishes-against" title="Permanent link">&para;</a></h2>
+<p>The sequential editing traces at <a href="https://github.com/josephg/editing-traces">josephg/editing-traces</a>
+are the common yardstick for text CRDTs — Yjs, Automerge and diamond-types all
+report against them. <code>automerge-paper</code> is the canonical one: <strong>259 778
+single-character edits</strong> recorded from someone actually writing a paper, ending
+in 104 852 characters with 77 463 tombstones.</p>
+<p>Apple M4 Max, Go 1.26.4, <code>darwin/arm64</code>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>replay the whole history locally</td>
+<td><strong>54.6 ms</strong> — 210 ns/edit</td>
+</tr>
+<tr>
+<td>apply the same history as a peer's operations</td>
+<td><strong>80.7 ms</strong> — 311 ns/operation</td>
+</tr>
+<tr>
+<td>deliver it <strong>back to front</strong>, nothing applicable until the last operation</td>
+<td><strong>0.30 s</strong></td>
+</tr>
+<tr>
+<td>memory held afterwards</td>
+<td><strong>4.7 MiB</strong> — 26.4 bytes per character including tombstones</td>
+</tr>
+</tbody>
+</table>
+<p>Reproduce it, and check the result against the recorded final text:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-sLO<span class="w"> </span>https://raw.githubusercontent.com/josephg/editing-traces/master/sequential_traces/automerge-paper.json.gz
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nv">CRDT_TRACE</span><span class="o">=</span>automerge-paper.json.gz<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-run<span class="w"> </span>TestEditingTrace<span class="w"> </span>-v
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nv">CRDT_TRACE</span><span class="o">=</span>automerge-paper.json.gz<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-run<span class="w"> </span><span class="s1">&#39;^$&#39;</span><span class="w"> </span>-bench<span class="w"> </span>EditingTrace<span class="w"> </span>-benchtime<span class="w"> </span>5x
+</code></pre></div>
+<p>The replay is a correctness test before it is a benchmark: a quarter of a million
+edits at positions a real person chose, with the answer known in advance, plus a
+snapshot round trip and a full reload. CI runs it on every change.</p>
+<h2 id="synthetic-benchmarks">Synthetic benchmarks<a class="headerlink" href="#synthetic-benchmarks" title="Permanent link">&para;</a></h2>
+<p>On a document of 10 000 characters:</p>
 <table>
 <thead>
 <tr>
 <th>Benchmark</th>
-<th>Result</th>
-<th>Was</th>
+<th>0.1.0</th>
+<th>0.2.0</th>
+<th>0.3.0</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>InsertAtEnd</code></td>
-<td><strong>64.8 ns/op</strong></td>
 <td>231 ns</td>
-</tr>
-<tr>
-<td><code>InsertAtStart</code></td>
-<td><strong>58.0 ns/op</strong></td>
-<td>315 ns</td>
+<td>65 ns</td>
+<td><strong>34.8 ns</strong></td>
 </tr>
 <tr>
 <td><code>ApplyRemote</code> (10 000 operations)</td>
-<td><strong>441 µs</strong></td>
 <td>823 µs</td>
-</tr>
-<tr>
-<td><code>String</code></td>
-<td>31.0 µs</td>
-<td>34.7 µs</td>
-</tr>
-<tr>
-<td><code>Snapshot</code></td>
-<td>75.2 µs, <strong>11.0 bytes/char</strong></td>
-<td>94.5 µs</td>
+<td>441 µs</td>
+<td><strong>302 µs</strong></td>
 </tr>
 <tr>
 <td><code>Load</code></td>
-<td><strong>1.02 ms</strong></td>
 <td>1.48 ms</td>
+<td>1.02 ms</td>
+<td><strong>830 µs</strong></td>
 </tr>
 <tr>
-<td>memory</td>
-<td><strong>73.1 bytes/char</strong></td>
-<td>107.7</td>
+<td><code>String</code></td>
+<td>34.7 µs</td>
+<td>31.0 µs</td>
+<td><strong>27.4 µs</strong></td>
+</tr>
+<tr>
+<td>memory, one run</td>
+<td>107.7 B/char</td>
+<td>73.1</td>
+<td><strong>4.19</strong></td>
 </tr>
 </tbody>
 </table>
-<p>Reproduce with <code>go test -run '^$' -bench . -benchmem</code>. The "was" column is the
-0.1.0 release, for the two changes described below.</p>
-<h2 id="the-position-mark">The position mark<a class="headerlink" href="#the-position-mark" title="Permanent link">&para;</a></h2>
-<p>Finding a rune offset means walking the list, and the first measurement made the
-cost plain: inserting at the end of a 10 000-character document took <strong>68 052 ns</strong>
-against 218 ns at the start. The whole difference was the walk.</p>
-<p>Someone typing asks for very nearly the same position on every keystroke, so
-<code>Doc</code> remembers the character its last local insertion produced and resumes from
-there when the position wanted is at or after it. Any other change — a deletion,
-a peer's operation — drops the mark.</p>
-<p><strong>68 052 ns → 231 ns, a factor of 294.</strong> The shortcut is covered by a test that
-runs every edit twice, once with the mark and once with it cleared, and requires
-the same document both times; removing the invalidation makes the convergence
-suite fail immediately.</p>
-<h2 id="indexing-characters-by-sequence-number-rather-than-by-identity">Indexing characters by sequence number rather than by identity<a class="headerlink" href="#indexing-characters-by-sequence-number-rather-than-by-identity" title="Permanent link">&para;</a></h2>
-<p>Integration has to find a character from the identity an operation names. The
-obvious structure is <code>map[ID]*item</code>, and it was measured costing about as much
-again as the character it points at — a 16-byte key and an 8-byte value carry
-roughly 48 bytes of map overhead against a 64-byte character.</p>
-<p>It is not needed. A site's sequence numbers start at one and have no gaps, and
-<code>Apply</code> refuses an operation until its predecessor has landed, so <strong>position in a
-slice is the sequence number</strong>: <code>chars[site][n]</code> is the character made by that
-site's operation <code>n+1</code>, or nil where that operation was a deletion and made none.
-Lookup stays O(1) and the per-character overhead falls to one pointer.</p>
-<p><strong>107.7 → 73.1 bytes/char, and the write path got faster too</strong> — inserting at the
-end went from 231 ns to 65 ns, because a map insert per character was a larger
-cost than the list work around it. Applying a peer's operations nearly halved.</p>
-<h2 id="what-73-bytes-per-character-means">What 73 bytes per character means<a class="headerlink" href="#what-73-bytes-per-character-means" title="Permanent link">&para;</a></h2>
-<p>A character costs a 64-byte list entry plus a pointer in its site's index. A 1 MB
-source file therefore needs roughly 73 MB, which is still the number that decides
-the next piece of work.</p>
-<p>The answer is <strong>not</strong> tombstone garbage collection. A tombstone cannot simply be
-dropped: a concurrent insertion may still name it as its origin, and removing it
-means rewriting those origins on every replica identically, plus keeping a mapping
-for operations still in flight that were made before the collection. Yjs sidesteps
-all of that by keeping the identity and dropping only the content — which wins
-nothing here, because the content of a character-level entry is four bytes of a
-sixty-four byte struct.</p>
-<p>The answer is <strong>run-length blocks</strong>: one entry per <em>run</em> of characters typed
-consecutively by one site, split only where a concurrent insertion or deletion
-actually lands. Within such a run the identities, Lamport clocks and origins all
-follow from the first character's, so a thousand-character run costs one entry and
-its text rather than a thousand entries. Typing produces long runs, so the entry
-count falls by orders of magnitude on real documents, and tombstones collapse with
-them. It is how Yjs and <code>ygo</code> are built, and the sequence-number index above is
-the structure it needs — a run is a contiguous range of one site's sequence
-numbers, which is exactly what that index addresses.</p>
+<p><code>go test -run '^$' -bench . -benchmem</code>.</p>
+<h2 id="what-changed-and-why">What changed, and why<a class="headerlink" href="#what-changed-and-why" title="Permanent link">&para;</a></h2>
+<h3 id="the-position-mark-and-then-a-list-that-walks-both-ways">The position mark, and then a list that walks both ways<a class="headerlink" href="#the-position-mark-and-then-a-list-that-walks-both-ways" title="Permanent link">&para;</a></h3>
+<p>Finding a rune offset means walking the document. The first measurement was
+blunt: inserting at the end of a 10 000-character document took <strong>68 052 ns</strong>
+against 218 ns at the start, and the whole difference was the walk. Remembering
+where the last local edit ended took that to 231 ns.</p>
+<p>That mark only helped forwards, which the real trace exposed immediately: a
+replay that should have taken milliseconds took <strong>2.79 seconds</strong>, because half
+the edits move the cursor back a little and every one of those walked from the
+start of the document. Blocks now carry a back pointer and the walk goes
+whichever way it must, and a deletion re-establishes the mark instead of dropping
+it.</p>
+<p><strong>2.79 s → 50 ms on the real trace, a factor of 56</strong>, and it is the single change
+that put this in the same range as the fastest implementations rather than an
+order of magnitude behind them.</p>
+<h3 id="characters-indexed-by-sequence-number-not-by-identity">Characters indexed by sequence number, not by identity<a class="headerlink" href="#characters-indexed-by-sequence-number-not-by-identity" title="Permanent link">&para;</a></h3>
+<p>Integration finds a character from the identity an operation names. That was a
+<code>map[ID]*item</code>, and the map cost about as much again as the character it pointed
+at. It was never needed: a site's sequence numbers start at one and have no gaps,
+and <code>Apply</code> refuses an operation until its predecessor has landed, so <strong>position
+in a slice is the sequence number</strong>.</p>
+<p>107.7 → 73.1 bytes per character, and the write path halved — a map insert per
+character cost more than all the list work around it.</p>
+<h3 id="run-length-blocks">Run-length blocks<a class="headerlink" href="#run-length-blocks" title="Permanent link">&para;</a></h3>
+<p>A character used to be a struct of its own: identity, clock, origin pointer,
+rune, deletion, next. Everything but the rune is derivable. A block is a run of
+characters one site typed consecutively, and for character <em>k</em> of that run the
+identity is <code>{site, seq+k}</code>, the clock is <code>clock+k</code>, and the origin is character
+<em>k-1</em>. A thousand characters typed in a row cost one header and their text.</p>
+<p>Blocks are only ever split — by an insertion landing inside one — and extended,
+by the next character of the same run. There is no merging to do: a new character
+can never bridge two existing blocks, because that would need the sequence number
+the right-hand block already holds. Integration walks runs rather than
+characters, because within a run the clocks ascend, so whichever way the "sorts
+after the new character" test goes at the first character of a run holds for the
+whole run.</p>
+<p><strong>73.1 → 4.19 bytes per character</strong> on a document typed in one run, and the
+index shrank with it: it now holds one entry per run rather than one per
+character.</p>
+<h3 id="waiting-operations-filed-under-what-they-are-waiting-for">Waiting operations filed under what they are waiting for<a class="headerlink" href="#waiting-operations-filed-under-what-they-are-waiting-for" title="Permanent link">&para;</a></h3>
+<p>A peer that sends a long history back to front used to be quadratic: every
+arrival rescanned everything still parked. Delivering the real trace in reverse —
+337 000 operations, none applicable until the last — took <strong>210 seconds</strong>.</p>
+<p>Operations now wait in a map keyed by the single operation each needs, so
+integrating one wakes exactly its dependents. <strong>210 s → 0.30 s.</strong></p>
+<h2 id="where-the-memory-goes-now">Where the memory goes now<a class="headerlink" href="#where-the-memory-goes-now" title="Permanent link">&para;</a></h2>
+<p>Measured on the real trace: 10 824 blocks holding 182 315 characters.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>block headers</td>
+<td>1014 KiB</td>
+</tr>
+<tr>
+<td>text</td>
+<td>712 KiB</td>
+</tr>
+<tr>
+<td>deletion records</td>
+<td><strong>2289 KiB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The deletion records dominate, and half of what they hold is nothing: a block
+keeps one entry per character as soon as <em>any</em> character in it is deleted, so
+146 546 entries carry 77 463 actual tombstones. Two designs would fix it, and the
+measurement says which is worth trying first:</p>
+<ul>
+<li><strong>Split on deletion</strong> so a block is wholly visible or wholly deleted, keeping
+  one deletion identity per block instead of one per character. It trades
+  deletion records for block headers, and headers are already a quarter of the
+  total — worth measuring before committing to.</li>
+<li><strong>A visibility bitmap</strong> plus a compact list of the deletions themselves. One
+  bit per character instead of sixteen bytes, at the cost of a search to recover
+  a deletion's identity — which only <code>OpsSince</code> and <code>Snapshot</code> need, never the
+  editing path.</li>
+</ul>
 <h2 id="complexity">Complexity<a class="headerlink" href="#complexity" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -680,20 +856,24 @@ numbers, which is exactly what that index addresses.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>Insert</code> at the mark</td>
-<td>O(1) amortised</td>
+<td><code>Insert</code> or <code>Delete</code> near the last edit</td>
+<td>O(distance in characters), which is what locality makes small</td>
 </tr>
 <tr>
-<td><code>Insert</code> elsewhere</td>
-<td>O(distance from the mark, or from the start)</td>
+<td><code>Insert</code> or <code>Delete</code> cold</td>
+<td>O(runs), not O(characters)</td>
 </tr>
 <tr>
 <td><code>Apply</code> an insertion</td>
-<td>O(1) plus the integration scan</td>
+<td>O(runs scanned from the origin)</td>
 </tr>
 <tr>
 <td><code>Apply</code> a deletion</td>
-<td>O(1)</td>
+<td>O(log runs of the target's site)</td>
+</tr>
+<tr>
+<td>an operation arriving before its dependencies</td>
+<td>O(1) to park, O(1) to wake</td>
 </tr>
 <tr>
 <td><code>String</code>, <code>Snapshot</code>, <code>OpsSince</code></td>
@@ -701,11 +881,11 @@ numbers, which is exactly what that index addresses.</p>
 </tr>
 </tbody>
 </table>
-<p>The integration scan is bounded by the number of insertions made concurrently at
+<p>The integration scan is bounded by the number of runs inserted concurrently at
 the same position, which is small in practice and adversarial in theory: a peer
-sending operations that all name the same origin can make it quadratic. That is a
-property of RGA's list representation shared with <code>Apply</code> and <code>Load</code> alike, and it
-goes away with the indexed structure that run-length blocks bring.</p>
+sending operations that all name the same origin can make it quadratic. The
+answer there is an order-statistic tree over the sequence, which would also make
+a cold positional lookup logarithmic rather than linear in runs.</p>
 
 
 
