@@ -1,0 +1,57 @@
+site_name: go-crdt docs
+site_description: Pure-Go conflict-free replicated data types for collaborative editing — a replicated text document and the gRPC service that carries it between people. CGO-free, 100% test coverage, and the same merge logic compiled to js/wasm so a browser and a server run one implementation rather than two.
+site_url: https://go-crdt.github.io/docs/
+repo_url: https://github.com/go-crdt
+repo_name: go-crdt
+edit_uri: ""
+
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - content.code.copy
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra:
+  version:
+    provider: mike
+    default: latest
+
+nav:
+  - Home: index.md
+  - How convergence is proven: methodology.md
+  - Modules:
+      - crdt — the engine: repos/crdt.md
+      - collab — the service: repos/collab.md
+  - Performance: performance.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
