@@ -557,6 +557,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#an-index-over-the-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      An index over the runs
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -758,6 +767,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#an-index-over-the-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      An index over the runs
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -814,19 +832,19 @@ in 104 852 characters with 77 463 tombstones.</p>
 <tbody>
 <tr>
 <td>replay the whole history locally</td>
-<td><strong>24.4 ms</strong> — 94 ns/edit</td>
+<td><strong>18.4 ms</strong> — 71 ns/edit</td>
 </tr>
 <tr>
 <td>apply the same history as a peer's operations</td>
-<td><strong>55.9 ms</strong> — 215 ns/operation</td>
+<td><strong>52.9 ms</strong> — 204 ns/operation</td>
 </tr>
 <tr>
 <td>deliver it <strong>back to front</strong>, nothing applicable until the last operation</td>
-<td><strong>0.24 s</strong></td>
+<td><strong>0.25 s</strong></td>
 </tr>
 <tr>
 <td>memory held afterwards</td>
-<td><strong>3.9 MiB</strong> — 22.7 bytes per character including tombstones</td>
+<td><strong>4.3 MiB</strong> — 24.6 bytes per character including tombstones</td>
 </tr>
 <tr>
 <td>the document encoded</td>
@@ -922,6 +940,11 @@ the median is quoted and the full spread is in the last column.</p>
 is the fastest text CRDT anyone has published and it stays that way here. The
 honest reading of this table is that we are in its range — same order of
 magnitude, same trace, same machine — and ahead of everything else measured.</p>
+<p>Our row is 0.4.0. The index over runs described below arrived after this table
+was measured and takes the replay to 18.4 ms, on the Go benchmark that put 0.4.0
+at 23.4 ms in the same session — level with diamond-types on this trace, by a
+measurement that agrees with this one to within 3%. The table stands as it was
+taken; the other implementations have not been re-run.</p>
 <h3 id="document-size-where-we-do-badly">Document size, where we do badly<a class="headerlink" href="#document-size-where-we-do-badly" title="Permanent link">&para;</a></h3>
 <p>Encoding the replayed document:</p>
 <table>
@@ -1003,7 +1026,8 @@ there is no figure for them here rather than a bad one.</p>
 </table>
 <p>Per <em>visible</em> character, because that is the only count the two agree on: the
 document ends with 104 852 characters, and we additionally hold 77 463
-tombstones, which is where the 22.7 B/char quoted earlier comes from. Yjs's
+tombstones, which is where the per-stored-character figure at the top of this
+page comes from. Yjs's
 default <code>gc: true</code> discards deleted content, so the <code>gc: false</code> row is the
 closer comparison — and we are below both.</p>
 <p>Ours varied by not one byte across three runs; Yjs's readings spanned 5678–5997
@@ -1048,6 +1072,7 @@ KiB (<code>gc: true</code>) and 7255–7573 KiB (<code>gc: false</code>).</p>
 <th>0.2.0</th>
 <th>0.3.0</th>
 <th>0.4.0</th>
+<th>0.5.0</th>
 </tr>
 </thead>
 <tbody>
@@ -1056,39 +1081,65 @@ KiB (<code>gc: true</code>) and 7255–7573 KiB (<code>gc: false</code>).</p>
 <td>231 ns</td>
 <td>65 ns</td>
 <td>34.8 ns</td>
-<td><strong>32.9 ns</strong></td>
+<td>32.9 ns</td>
+<td><strong>33.7 ns</strong></td>
 </tr>
 <tr>
 <td><code>ApplyRemote</code> (10 000 operations)</td>
 <td>823 µs</td>
 <td>441 µs</td>
 <td>302 µs</td>
-<td><strong>279 µs</strong></td>
+<td>279 µs</td>
+<td><strong>295 µs</strong></td>
 </tr>
 <tr>
 <td><code>Load</code></td>
 <td>1.48 ms</td>
 <td>1.02 ms</td>
 <td>830 µs</td>
-<td><strong>756 µs</strong></td>
+<td>756 µs</td>
+<td><strong>613 µs</strong></td>
 </tr>
 <tr>
 <td><code>String</code></td>
 <td>34.7 µs</td>
 <td>31.0 µs</td>
 <td>27.4 µs</td>
-<td><strong>23.7 µs</strong></td>
+<td>23.7 µs</td>
+<td><strong>23.6 µs</strong></td>
 </tr>
 <tr>
 <td>memory, one run</td>
 <td>107.7 B/char</td>
 <td>73.1</td>
 <td>4.19</td>
-<td><strong>4.20</strong></td>
+<td>4.20</td>
+<td><strong>4.19</strong></td>
+</tr>
+<tr>
+<td><code>ScatteredInsert</code></td>
+<td></td>
+<td></td>
+<td></td>
+<td>12.3 µs</td>
+<td><strong>0.37 µs</strong></td>
+</tr>
+<tr>
+<td><code>SameOriginFlood</code> (5000 operations)</td>
+<td></td>
+<td></td>
+<td></td>
+<td>27.3 ms</td>
+<td><strong>1.07 ms</strong></td>
 </tr>
 </tbody>
 </table>
-<p><code>go test -run '^$' -bench . -benchmem</code>.</p>
+<p><code>go test -run '^$' -bench . -benchmem</code>. The last two arrived with 0.5.0; their
+0.4.0 column is the same benchmark run against the release before it.</p>
+<p>The 0.5.0 column holds two changes and a busy machine, so it was taken beside the
+commit before it in the same session, which read 32.9 ns, 291 µs, 607 µs, 24.0 µs
+and 4.19 B/char. <code>Load</code> is the run-length snapshot format; what the index costs
+here is under a nanosecond of <code>InsertAtEnd</code> and 4 µs of <code>ApplyRemote</code>.</p>
 <h2 id="what-changed-and-why">What changed, and why<a class="headerlink" href="#what-changed-and-why" title="Permanent link">&para;</a></h2>
 <h3 id="the-position-mark-and-then-a-list-that-walks-both-ways">The position mark, and then a list that walks both ways<a class="headerlink" href="#the-position-mark-and-then-a-list-that-walks-both-ways" title="Permanent link">&para;</a></h3>
 <p>Finding a rune offset means walking the document. The first measurement was
@@ -1177,9 +1228,105 @@ but their <em>deletion records</em> are not: cutting a block divides a record, a
 replacing one character's deletion when two replicas delete it at once cuts
 another. Writing them joined hides that. The randomised convergence suite found
 this immediately, by comparing encoded state rather than text.</p>
+<h3 id="an-index-over-the-runs">An index over the runs<a class="headerlink" href="#an-index-over-the-runs" title="Permanent link">&para;</a></h3>
+<p>The list answers "what follows this" in a step and everything else by walking,
+which the mark makes cheap only while the next position is near the last one. Two
+things it is not cheap for, and the second is not a matter of taste:</p>
+<ul>
+<li>a position far from the last edit — a second cursor, a replace-all, a patch
+  dropped into the middle, or simply a peer's operation arriving between two
+  keystrokes and clearing the mark — walks every run in between;</li>
+<li>integration walks forward from the origin over everything that sorts after the
+  new character, so a peer naming one origin over and over makes the walk the
+  length of the document. <code>collab</code>'s server integrates what its peers send, and
+  peers need not be honest.</li>
+</ul>
+<p>The blocks are now the nodes of an AVL tree in document order as well as links in
+the list, each carrying two summaries of its subtree: the visible characters it
+holds, which turns a position into a descent, and the block of it that sorts
+lowest, which turns that integration walk into one too. Measured back to back
+against the release before it, on the same machine in the same session:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>0.4.0</th>
+<th>0.5.0</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the real trace, replayed</td>
+<td>23.4 ms</td>
+<td><strong>18.4 ms</strong></td>
+<td>−21%</td>
+</tr>
+<tr>
+<td>2000 inserts at scattered positions in a 12 000-run document</td>
+<td>12.3 µs each</td>
+<td><strong>0.37 µs</strong></td>
+<td>33×</td>
+</tr>
+<tr>
+<td>5000 operations at one origin</td>
+<td>27.3 ms</td>
+<td><strong>1.07 ms</strong></td>
+<td>26×</td>
+</tr>
+<tr>
+<td>20 000 operations at one origin</td>
+<td>370 ms</td>
+<td><strong>4.6 ms</strong></td>
+<td>80×</td>
+</tr>
+<tr>
+<td>the real trace, applied as a peer's operations</td>
+<td>50.9 ms</td>
+<td>52.9 ms</td>
+<td>+4%</td>
+</tr>
+<tr>
+<td>memory held on the real trace</td>
+<td>22.66 B/char</td>
+<td>24.56 B/char</td>
+<td>+8%</td>
+</tr>
+<tr>
+<td><code>InsertAtStart</code></td>
+<td>93.2 ns</td>
+<td>140 ns</td>
+<td>+50%</td>
+</tr>
+</tbody>
+</table>
+<p>The flood is the one to read twice. Its cost per operation was 2.8 µs at 2500
+operations, 5.6 at 5000, 10.2 at 10 000 and 18.5 at 20 000 — doubling with the
+document, which is the quadratic stated below. It is now 193 ns, 214, 231 and
+231: flat, because a subtree whose lowest-sorting block still sorts after the new
+character holds nothing to stop on and is stepped over whole.</p>
+<p>The trace got faster rather than slower because real editing is not as local as
+the mark assumes: a fifth of the replay was walking.</p>
+<p>Both walks keep their heads. Each starts along the list and turns to the tree
+only after sixteen runs, which is about what a descent costs, so typing pays
+nothing for the index and never sees it.</p>
+<p>Three numbers went the wrong way, and all three are the same number. The index
+costs 32 bytes a run — three pointers, a count and a height, which takes a block
+header from Go's 112-byte size class to its 144-byte one — and on the trace that
+is 338 KiB. <code>InsertAtStart</code> inserts one character per run at one end, so it pays
+a walk to the root of the tree per character and nothing else amortises it; it is
+the index's worst case by construction. Applying a whole history allocates
+everything from nothing, and a profile of it is dominated by the allocator rather
+than by anything in <code>tree.go</code> — the 4% is that 8% of memory, arriving as
+collector work.</p>
+<p>A B-tree holding runs in its leaves, as diamond-types does, would pay for itself
+here: no per-run node, a depth of four rather than seventeen, and iteration from
+the leaves. It costs the pointer identity of a block, which the mark, the
+per-site index and every walk in <code>text.go</code> are written in terms of. That is the
+next thing to measure, not something to guess at.</p>
 <h2 id="where-the-memory-goes-now">Where the memory goes now<a class="headerlink" href="#where-the-memory-goes-now" title="Permanent link">&para;</a></h2>
 <p>Measured on the real trace: 10 824 blocks holding 182 315 characters, of which
-77 463 are tombstones, in 3.9 MiB.</p>
+77 463 are tombstones, in 4.3 MiB.</p>
 <table>
 <thead>
 <tr>
@@ -1190,7 +1337,7 @@ this immediately, by comparing encoded state rather than text.</p>
 <tbody>
 <tr>
 <td>block headers</td>
-<td>~1050 KiB</td>
+<td>~1390 KiB</td>
 </tr>
 <tr>
 <td>text</td>
@@ -1202,11 +1349,7 @@ this immediately, by comparing encoded state rather than text.</p>
 </tr>
 </tbody>
 </table>
-<p>The remaining lever is the block headers, at 104 bytes each. An order-statistic
-tree over the sequence would replace both the linked list and the per-site slice
-index, make a cold positional lookup logarithmic rather than linear in runs, and
-remove the adversarial quadratic described below — worth measuring before
-committing to.</p>
+<p>The remaining lever is still the block headers, now 144 bytes each.</p>
 <h2 id="complexity">Complexity<a class="headerlink" href="#complexity" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1222,11 +1365,11 @@ committing to.</p>
 </tr>
 <tr>
 <td><code>Insert</code> or <code>Delete</code> cold</td>
-<td>O(runs), not O(characters)</td>
+<td>O(log runs)</td>
 </tr>
 <tr>
 <td><code>Apply</code> an insertion</td>
-<td>O(runs scanned from the origin)</td>
+<td>O(log runs)</td>
 </tr>
 <tr>
 <td><code>Apply</code> a deletion</td>
@@ -1242,11 +1385,14 @@ committing to.</p>
 </tr>
 </tbody>
 </table>
-<p>The integration scan is bounded by the number of runs inserted concurrently at
-the same position, which is small in practice and adversarial in theory: a peer
-sending operations that all name the same origin can make it quadratic. The
-answer there is an order-statistic tree over the sequence, which would also make
-a cold positional lookup logarithmic rather than linear in runs.</p>
+<p>Both logarithms are the tree in <code>tree.go</code>, reached after sixteen runs of walking
+the list. Nothing an untrusted peer sends can make either of them worse: the tree
+is an AVL tree, balanced by height rather than by priorities a peer could
+compute, and a peer that could choose the priorities could choose a list.</p>
+<p>Adding a run to the tree costs a walk to its root, which typing amortises over a
+whole run of characters — the change a keystroke makes is held against the block
+and carried up when the tree is next read — but which one character per run does
+not.</p>
 
 
 
