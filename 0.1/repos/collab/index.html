@@ -462,6 +462,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#who-may-open-what" class="md-nav__link">
+    <span class="md-ellipsis">
+      Who may open what
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next" class="md-nav__link">
     <span class="md-ellipsis">
       Next
@@ -607,6 +616,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#who-may-open-what" class="md-nav__link">
+    <span class="md-ellipsis">
+      Who may open what
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next" class="md-nav__link">
     <span class="md-ellipsis">
       Next
@@ -703,13 +721,22 @@ would want eviction, which is a change to <code>open</code> and <code>leave</cod
 <p>A skipped test is not a passing one, so CI sets <code>COLLAB_REQUIRE_WASM</code> on the job
 that exists to run the last of these: a missing Node or wasm glue fails it rather
 than turning it green.</p>
+<h2 id="who-may-open-what">Who may open what<a class="headerlink" href="#who-may-open-what" title="Permanent link">&para;</a></h2>
+<p><code>Config.Authorize</code> decides it, once per session, after the join arrives and
+before the document is touched — so a refused session neither reads the store nor
+reveals whether the document exists.</p>
+<p>The obvious place for this is a gRPC interceptor, and that is the wrong place: an
+interceptor sees the method and the request metadata, and the document being
+joined is in neither. It arrives in the stream's first message, so anything
+deciding <em>per document</em> has to run after that message. Authentication, being per
+connection rather than per document, does belong in an interceptor; the context
+carries whatever it put there.</p>
 <h2 id="next">Next<a class="headerlink" href="#next" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Postgres-backed <code>Store</code> against <a href="https://github.com/openweft">weft's HA datastore</a>,
   keeping snapshots and an operation log.</li>
 <li>Wiring <code>weft-loom-server</code> and the loom browser client to this package.</li>
-<li>Access control: the service has no notion of who may open a document, which
-  belongs in an interceptor rather than here.</li>
+<li>Wiring <code>weft-loom-server</code> and the loom browser client to this package.</li>
 </ul>
 
 
