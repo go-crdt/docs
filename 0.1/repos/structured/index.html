@@ -1,0 +1,962 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Pure-Go conflict-free replicated data types for collaborative editing — a replicated text document and the gRPC service that carries it between people. CGO-free, 100% test coverage, and the same merge logic compiled to js/wasm so a browser and a server run one implementation rather than two.">
+      
+      
+      
+        <link rel="canonical" href="https://go-crdt.github.io/docs/0.1/repos/structured/">
+      
+      
+        <link rel="prev" href="../crdt/">
+      
+      
+        <link rel="next" href="../collab/">
+      
+      
+      <link rel="icon" href="../../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>structured — the documents - go-crdt docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="purple" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#structured-the-documents" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="go-crdt docs" class="md-header__button md-logo" aria-label="go-crdt docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            go-crdt docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              structured — the documents
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="purple" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="purple" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/go-crdt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    go-crdt
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="go-crdt docs" class="md-nav__button md-logo" aria-label="go-crdt docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    go-crdt docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/go-crdt" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    go-crdt
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../methodology/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How convergence is proven
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../crdt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    crdt — the engine
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    structured — the documents
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    structured — the documents
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#records-whose-fields-merge-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Records whose fields merge apart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-that-move" class="md-nav__link">
+    <span class="md-ellipsis">
+      Things that move
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-things-a-register-cannot-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three things a register cannot be
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Formatting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-document-of-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      A document of blocks
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handwriting-and-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handwriting, and files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-things-that-are-not-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three things that are not state
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-here" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start here
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../collab/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    collab — the service
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../performance/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#records-whose-fields-merge-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Records whose fields merge apart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-that-move" class="md-nav__link">
+    <span class="md-ellipsis">
+      Things that move
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-things-a-register-cannot-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three things a register cannot be
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Formatting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-document-of-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      A document of blocks
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handwriting-and-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handwriting, and files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-things-that-are-not-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three things that are not state
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-here" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start here
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="structured-the-documents">structured — the documents<a class="headerlink" href="#structured-the-documents" title="Permanent link">&para;</a></h1>
+<p><code>crdt/structured</code> is where documents are built, and the first thing to say about
+it is that it re-implements nothing.</p>
+<p>There are three merging structures underneath — a text, a list, a map — and
+every type here is a way of using them. Convergence, commutativity, idempotence
+and associativity are proved once, of those, and inherited by everything
+composed from them. The package's own acceptance gate runs those four laws plus
+a snapshot round trip over four document types at once, against <strong>byte-equal
+snapshots</strong> rather than equal readings, because two replicas can agree on every
+value and still disagree about which write produced it.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#a-document-of-blocks"><code>Blocks</code></a></td>
+<td>a document of paragraphs, headings, list items, quotes, code — nested</td>
+</tr>
+<tr>
+<td><a href="#formatting"><code>RichText</code></a></td>
+<td>text carrying bold, links, comments — anything covering a stretch</td>
+</tr>
+<tr>
+<td><code>Sheet</code></td>
+<td>a spreadsheet: rows and columns that move, cells addressed by identity</td>
+</tr>
+<tr>
+<td><code>Diagram</code></td>
+<td>an isometric diagram: nodes, connectors, zones, layers, free text</td>
+</tr>
+<tr>
+<td><code>Tree</code></td>
+<td>a tree whose nodes move — a file tree, an outline, threaded replies</td>
+</tr>
+<tr>
+<td><code>Sequence</code></td>
+<td>an ordered collection whose items move — slides, a board, layers</td>
+</tr>
+<tr>
+<td><a href="#three-things-a-register-cannot-be"><code>Counter</code></a></td>
+<td>a number several people add to at once</td>
+</tr>
+<tr>
+<td><a href="#three-things-a-register-cannot-be"><code>MultiRegister</code></a></td>
+<td>a value two replicas are allowed to disagree about</td>
+</tr>
+<tr>
+<td><a href="#three-things-a-register-cannot-be"><code>Set</code></a></td>
+<td>a set of names — labels, participants, what is showing</td>
+</tr>
+<tr>
+<td><code>Ink</code></td>
+<td>what is drawn by hand</td>
+</tr>
+<tr>
+<td><code>Blobs</code></td>
+<td>the files a document refers to but is not made of</td>
+</tr>
+<tr>
+<td><a href="#three-things-that-are-not-state"><code>Undo</code></a></td>
+<td>putting back what this replica did</td>
+</tr>
+<tr>
+<td><a href="#three-things-that-are-not-state"><code>Proposals</code></a></td>
+<td>changes that are not part of the document yet</td>
+</tr>
+<tr>
+<td><code>Register</code>, <code>RecordMap</code>, <code>Cell</code></td>
+<td>the pieces the rest compose</td>
+</tr>
+</tbody>
+</table>
+<p>What follows is why each is shaped the way it is. In every case the shape is
+forced by something the obvious version gets wrong.</p>
+<h2 id="records-whose-fields-merge-apart">Records whose fields merge apart<a class="headerlink" href="#records-whose-fields-merge-apart" title="Permanent link">&para;</a></h2>
+<p>A record stored as one opaque value loses an edit: two replicas that change two
+different fields collide, and last-writer-wins discards one of them wholesale.
+<code>RecordMap</code> gives each field its own map key, so only a genuine same-field
+conflict is one. <code>Register</code> is the other degenerate case — one key, and nothing
+to merge that the map does not already merge.</p>
+<p>Stable identities come from operations. A type that needs one writes a map key
+whose value nobody reads and takes the identity of the write: unique across
+replicas, reload-safe, never reused.</p>
+<h2 id="things-that-move">Things that move<a class="headerlink" href="#things-that-move" title="Permanent link">&para;</a></h2>
+<p><code>crdt.List</code> is an RGA. It decides where a new element goes against every other
+element arriving at the same moment, per element, which is exactly right for
+text — and it has no operation for moving something already in it. Written with
+the operations it does have, a move is a delete and an insert: two operations,
+which a concurrent move of the same item splits, leaving the item in both places
+or in neither.</p>
+<p>So <code>Sequence</code> and <code>Tree</code> carry position as a <strong>rank</strong>, a string with another
+always available between any two. A move is one field write, and two replicas
+moving the same item are two writes to one field, which the map already settles.</p>
+<p>A <code>Tree</code> has a second problem: a parent merges on its own, but the <em>shape</em> two
+legal concurrent moves make between them is a ring. It is resolved when the tree
+is read, by rules that are a function of the state alone. A node whose parent is
+not a live node reads as a child of the root, so deleting a folder does not
+delete a file somebody concurrently moved into it — the file resurfaces, and
+that direction is deliberate: a tree that loses work to a concurrent delete
+cannot be trusted with a project.</p>
+<h2 id="three-things-a-register-cannot-be">Three things a register cannot be<a class="headerlink" href="#three-things-a-register-cannot-be" title="Permanent link">&para;</a></h2>
+<p><strong>A count.</strong> Read it, add one, write it back: two replicas holding 7 both write 8
+and a vote is lost. The mistake is not in the register — <em>"add one" is not a
+value</em>, and writing a value cannot say it. <code>Counter</code> keys the map by site, so
+concurrent additions are concurrent writes to different keys and nothing
+conflicts at all.</p>
+<p><strong>A disagreement.</strong> Two people rename the same thing at once and one of the names
+is gone, with nothing anywhere recording that there was a second — not in the
+state, not in the operations, not in anything a reader could show.
+<code>MultiRegister</code> keeps a version vector beside each replica's value and reads the
+ones nothing dominates. Choosing between them is <em>writing the one chosen</em>, since
+a write dominates everything its writer could see, so there is no operation for
+settling and none is needed. A vector rather than a clock, because a Lamport
+clock gives a total order and the question here is which pairs are <em>unordered</em>.</p>
+<p><strong>A set.</strong> Keyed by the name, one replica adds a label while another, which has
+never seen it, takes it away; one write wins by an order that has nothing to do
+with what either knew. In <code>Set</code> every addition mints a tag and a removal takes
+away the tags it can see. An addition nobody had seen is untouched — not as a
+policy but for want of anything to base one on.</p>
+<h2 id="formatting">Formatting<a class="headerlink" href="#formatting" title="Permanent link">&para;</a></h2>
+<p>Written into the sequence — a bold-on character, a bold-off character — two
+replicas bolding overlapping stretches produce interleaved markers and the text
+between them reads as bold on one replica and not on the other. Written per
+character it converges and costs a write per letter, forever, and each of those
+writes is stored forever.</p>
+<p>A <code>RichText</code> mark is one operation naming two boundaries, and the formatting is
+worked out when the text is read. A boundary is a character and a <em>side</em> of it,
+which is exactly the bold-continues / link-does-not distinction: bold ends at
+the boundary before the next character and grows as you type; a link ends at the
+boundary after its last character and does not.</p>
+<h2 id="a-document-of-blocks">A document of blocks<a class="headerlink" href="#a-document-of-blocks" title="Permanent link">&para;</a></h2>
+<p>A <code>RichText</code> per block converges and does not scale, for a reason that has
+nothing to do with merging: a part cannot be taken out of a composite, and a
+version carries one entry per part. A thousand-block document is then a thousand
+entries exchanged on <strong>every</strong> sync, and the version of an empty document that
+once had a thousand blocks is the same size as the version of a full one.</p>
+<p><code>Blocks</code> is one text, one marks map and one blocks map — <strong>three parts however
+many blocks there are.</strong> Measured in its own tests, and asserted there so the
+claim fails if it stops being true:</p>
+<table>
+<thead>
+<tr>
+<th>a thousand blocks</th>
+<th>version vector</th>
+<th>parts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a part apiece</td>
+<td>18894 bytes</td>
+<td>1000</td>
+</tr>
+<tr>
+<td><code>Blocks</code></td>
+<td><strong>35 bytes</strong></td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>A block begins at a <strong>marker character</strong> rather than at a boundary between two
+of them, and that is the whole of why it works. Two people can edit the same
+seam at the same moment and mean different things — one is finishing a
+paragraph, the other is starting the next — and both are the same offset. A
+boundary faces one way or the other and not both, because there is one place in
+the sequence to insert at; a character has two sides. So each intention is its
+own insertion at its own place, and the sequence already knows how to keep two
+of those apart.</p>
+<p>Nesting is a <strong>depth</strong> and not a parent. The order of the blocks is already
+decided, by the text, and a parent pointer is a second statement about the same
+arrangement — one that can contradict the first, leaving a block reading before
+the block it hangs under, with no answer that is not an arbitration. Every
+sequence of depths is a document somebody can read.</p>
+<h2 id="handwriting-and-files">Handwriting, and files<a class="headerlink" href="#handwriting-and-files" title="Permanent link">&para;</a></h2>
+<p>A stroke held as one value has its whole path rewritten by every point, so the
+person watching sees the line redrawn rather than extended. <code>Ink</code> appends points
+to a stream of their own, each saying which stroke it belongs to — one stream
+rather than one part per stroke, for the reason <code>Blocks</code> gives.</p>
+<p>A file as one map value is one operation the size of the file: it cannot be sent
+as it is read, resumed if the connection drops, or recognised as one a peer
+already has. <code>Blobs</code> cuts it into chunks stored under the hash of their own
+bytes, so the same chunk written by two replicas is the same key <em>and</em> the same
+value — nothing to merge, and nothing stored twice.</p>
+<h2 id="three-things-that-are-not-state">Three things that are not state<a class="headerlink" href="#three-things-that-are-not-state" title="Permanent link">&para;</a></h2>
+<p><strong>Undo is not a stack of states.</strong> Restoring one throws away what everybody else
+has done since, and travels to them as an instruction to do the same. An undo
+here is a <em>new edit</em>, made now, whose effect is that the old one did not happen,
+and it reaches a peer as an ordinary edit with no code needed in front of it.
+Edits go through the manager, because inverting one afterwards is impossible
+from what the document keeps: a reported change carries the text that was
+inserted, never the text that was removed.</p>
+<p><strong>History costs nothing, because it is already kept.</strong> A document that merges
+without a server carries the identity of every operation and of every deletion,
+so <em>"was this character there, and was it visible"</em> is a question a version
+vector already answers. <code>TextAt</code>, <code>LenAt</code> and <code>ChangesSince</code> ask it. No log is
+added. A map keeps one record per key, so a map-backed type can say when its
+current value was written and not what preceded it — which the documentation
+says rather than hides.</p>
+<p><strong>A proposal is a replica that has not synced.</strong> Two copies of a text can be
+compared, and what a comparison produces is a <em>difference</em>; applying a
+difference mints new characters, so every comment and cursor anchored to the
+ones it replaced is left pointing at nothing — a review that accepted a wording
+change would take the comments off the paragraph around it. <code>Proposals</code> records
+the document's own operations instead, made against the document's own
+identities. Accepting is <code>Apply</code>, which merges with whatever happened meanwhile
+because that is what a replica returning from offline does; turning one down
+costs nothing, because the operations were never applied.</p>
+<h2 id="start-here">Start here<a class="headerlink" href="#start-here" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nx">docs</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">structured</span><span class="p">.</span><span class="nx">NewBlocks</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nx">title</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">docs</span><span class="p">.</span><span class="nx">Insert</span><span class="p">(</span><span class="nx">structured</span><span class="p">.</span><span class="nx">DocStart</span><span class="p">,</span><span class="w"> </span><span class="s">"heading"</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nx">docs</span><span class="p">.</span><span class="nx">InsertText</span><span class="p">(</span><span class="nx">title</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s">"On rivers"</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">docs</span><span class="p">.</span><span class="nx">Insert</span><span class="p">(</span><span class="nx">title</span><span class="p">,</span><span class="w"> </span><span class="s">"paragraph"</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nx">docs</span><span class="p">.</span><span class="nx">InsertText</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="s">"They run downhill."</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nx">docs</span><span class="p">.</span><span class="nx">Mark</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="s">"bold"</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">structured</span><span class="p">.</span><span class="nx">ExpandEnd</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">block</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">docs</span><span class="p">.</span><span class="nx">List</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">"%s: %s\n"</span><span class="p">,</span><span class="w"> </span><span class="nx">block</span><span class="p">.</span><span class="nx">Type</span><span class="p">,</span><span class="w"> </span><span class="nx">block</span><span class="p">.</span><span class="nx">Text</span><span class="p">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">// heading: On rivers</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1">// paragraph: They run downhill.</span>
+</code></pre></div>
+<p>Every type here is a <a href="../crdt/"><code>crdt.Composite</code></a> underneath, so it is one
+snapshot, one version and one thing to authorise — and
+<a href="../collab/"><code>collab</code></a> carries any of them between people without knowing which
+it is.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.top", "navigation.instant", "content.code.copy", "search.suggest"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -16,7 +16,7 @@
         <link rel="prev" href="../../methodology/">
       
       
-        <link rel="next" href="../collab/">
+        <link rel="next" href="../structured/">
       
       
       <link rel="icon" href="../../assets/logo.svg">
@@ -522,9 +522,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next" class="md-nav__link">
+  <a href="#what-was-next-and-is-now-done" class="md-nav__link">
     <span class="md-ellipsis">
-      Next
+      What was next, and is now done
     </span>
   </a>
   
@@ -534,6 +534,27 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../structured/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    structured — the documents
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -769,9 +790,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next" class="md-nav__link">
+  <a href="#what-was-next-and-is-now-done" class="md-nav__link">
     <span class="md-ellipsis">
-      Next
+      What was next, and is now done
     </span>
   </a>
   
@@ -1014,16 +1035,19 @@ clamped rather than trusted, and replaced by the next keystroke. An offset a
 character out draws a caret a character out until the next update arrives; it
 can never edit anything and it is never stored. A peer counting in UTF-16
 converts at its own edge, where it has to clamp in any case.</p>
-<h2 id="next">Next<a class="headerlink" href="#next" title="Permanent link">&para;</a></h2>
+<h2 id="what-was-next-and-is-now-done">What was next, and is now done<a class="headerlink" href="#what-was-next-and-is-now-done" title="Permanent link">&para;</a></h2>
 <ol>
-<li><code>Collab</code>, a gRPC service over
-   <a href="https://github.com/grpc-transports/websocket"><code>grpc-transports/websocket</code></a>:
-   a per-document hub that fans out operations, snapshots late joiners, and
-   persists. No transform, because the CRDT converges.</li>
-<li>An end-to-end proof with two <code>js/wasm</code> clients editing concurrently through
-   that server, asserting programmatically that both converge.</li>
-<li>Run-length blocks — see <a href="../../performance/">performance.md</a>.</li>
+<li><strong><code>Collab</code></strong> — a per-document gRPC hub over
+   <a href="https://github.com/grpc-transports/websocket"><code>grpc-transports/websocket</code></a>
+   that fans out operations, snapshots late joiners and persists, with no
+   transform because the CRDT converges. See <a href="../collab/">collab</a>.</li>
+<li><strong>The end-to-end proof</strong>: two <code>js/wasm</code> clients editing through that server,
+   asserting convergence programmatically.</li>
+<li><strong>Run-length blocks</strong>, at 73.1 → 4.19 bytes per character — see
+   <a href="../../performance/">performance</a>.</li>
 </ol>
+<p>What has grown since is the layer above: see
+<a href="../structured/">structured — the documents</a>.</p>
 
 
 
