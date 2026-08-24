@@ -251,12 +251,16 @@ character out draws a caret a character out until the next update arrives; it
 can never edit anything and it is never stored. A peer counting in UTF-16
 converts at its own edge, where it has to clamp in any case.
 
-## Next
+## What was next, and is now done
 
-1. `Collab`, a gRPC service over
-   [`grpc-transports/websocket`](https://github.com/grpc-transports/websocket):
-   a per-document hub that fans out operations, snapshots late joiners, and
-   persists. No transform, because the CRDT converges.
-2. An end-to-end proof with two `js/wasm` clients editing concurrently through
-   that server, asserting programmatically that both converge.
-3. Run-length blocks — see [performance.md](../performance.md).
+1. **`Collab`** — a per-document gRPC hub over
+   [`grpc-transports/websocket`](https://github.com/grpc-transports/websocket)
+   that fans out operations, snapshots late joiners and persists, with no
+   transform because the CRDT converges. See [collab](collab.md).
+2. **The end-to-end proof**: two `js/wasm` clients editing through that server,
+   asserting convergence programmatically.
+3. **Run-length blocks**, at 73.1 → 4.19 bytes per character — see
+   [performance](../performance.md).
+
+What has grown since is the layer above: see
+[structured — the documents](structured.md).

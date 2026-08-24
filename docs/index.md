@@ -2,9 +2,10 @@
 
 Two pure-Go modules for collaborative editing.
 
-| Module | What it is |
+| Package | What it is |
 |---|---|
-| [`crdt`](repos/crdt.md) | the replicated text document — `Doc`, operations, version vectors, snapshots, presence |
+| [`crdt`](repos/crdt.md) | the engine — a replicated text, list and map, operations, version vectors, snapshots, presence |
+| [`crdt/structured`](repos/structured.md) | the documents built on it — blocks, formatting, sheets, diagrams, sets, proposals |
 | [`collab`](repos/collab.md) | the gRPC service, server and client that carry a document between people |
 
 Both are **CGO-free**, held at **100% statement coverage**, and validated on all six
