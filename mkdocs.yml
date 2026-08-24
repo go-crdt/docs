@@ -39,6 +39,7 @@ nav:
   - How convergence is proven: methodology.md
   - Modules:
       - crdt — the engine: repos/crdt.md
+      - structured — the documents: repos/structured.md
       - collab — the service: repos/collab.md
   - Performance: performance.md
   - Contributing: contributing.md
