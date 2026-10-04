@@ -392,6 +392,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The instruments are checked against known breakage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#systematically-over-every-refusal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Systematically, over every refusal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -689,6 +706,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The instruments are checked against known breakage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#systematically-over-every-refusal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Systematically, over every refusal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -767,6 +801,108 @@ decides is <strong>which</strong> order concurrent insertions take, and that is 
 user — whoever had seen more of the document when they typed is placed first,
 rather than whoever happens to hold the smaller identifier. A test was written to
 pin exactly that, and it fails without the clock.</p>
+<h3 id="systematically-over-every-refusal">Systematically, over every refusal<a class="headerlink" href="#systematically-over-every-refusal" title="Permanent link">&para;</a></h3>
+<p>Doing that by hand finds what you thought to try. On 2026-10-04 it was done
+mechanically instead, over every refusal in the files that read bytes somebody
+else wrote: walk the source for an <code>if</code> whose body returns a refusal, delete
+one, build, run the suite, restore, repeat.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>collab</code></th>
+<th><code>crdt</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>refusals and bounds taken as subjects</td>
+<td>126</td>
+<td>104</td>
+</tr>
+<tr>
+<td>deletions that did not compile — <strong>not mutants</strong></td>
+<td>73</td>
+<td>29</td>
+</tr>
+<tr>
+<td>caught by the suite</td>
+<td>43</td>
+<td>63</td>
+</tr>
+<tr>
+<td>survived, at 100% of statements</td>
+<td>10</td>
+<td>12</td>
+</tr>
+<tr>
+<td>of those, <strong>real</strong></td>
+<td><strong>3</strong></td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>The first row of numbers is not a result about the tests. Deleting
+<code>if err != nil { return err }</code> orphans the <code>err</code> the line above declared and
+the package stops building; a run that counts those as killed, or as survived,
+is wrong either way, so they are a third verdict.</p>
+<p>The three real ones were the same mistake three times: <strong>a test asserting that
+an error happened</strong>, where the code after the deleted guard also fails and says
+something else. The clearest is a client that hangs up before sending anything,
+which was handed <code>InvalidArgument</code> and "a session must open with a join" — for
+something it never did — where its own stream's <code>EOF</code> is the truth. All three
+are pinned now, each by naming the error its case is about rather than its
+existence.</p>
+<p>The nineteen that survived and were not real are worth naming rather than
+carrying as a worry. Counted by why each one survives:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a bound doubled one layer down</td>
+<td>9</td>
+</tr>
+<tr>
+<td>a fast path — "no character here is more than one UTF-16 code unit, so the offset is the offset"</td>
+<td>6</td>
+</tr>
+<tr>
+<td>only saves work: an empty batch not sent, a file not rewritten when nothing changed, one more <code>Recv</code> that returns the same error</td>
+<td>3</td>
+</tr>
+<tr>
+<td>the same value by another line: <code>append([]byte(nil))</code> of nothing is nil too</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>The nine are what defence in depth looks like from a single-layer mutation: a
+kind check in a decoder whose own last line validates the operation anyway, a
+negative length refused again by the range check below it, a snapshot bound
+standing in front of the accounting that every promised operation appears
+exactly once, a lookup before a slow load that a second lookup under the lock
+repeats afterwards.</p>
+<p>Three of those were measured rather than argued: the same <code>ErrOutOfRange</code>
+either way for four negative lengths; all 102 truncations of a real snapshot
+refused with a column's empty-check and without it; and 27.7 million fuzz
+executions against one mutant finding nothing, because that fuzz target asks
+whether a load panics and not whether it accepted what it should have refused.</p>
+<p>The proportion is not a surprise. At Google, over almost seventeen million
+mutants, developers initially judged 85% of what was reported to them
+unproductive, and rules for suppressing those are what made the technique
+usable at all (Petrović &amp; Ivanković, <em>Practical Mutation Testing at Scale: A
+View From Google</em>, IEEE TSE, 2021). Here the filtering is a reading of each
+survivor, which is affordable because there are twenty-two of them.</p>
+<p>One caution, learned the hard way the same evening: a <strong>duration</strong> taken during
+a campaign measures the campaign. One mutant appeared to leave the suite four
+times slower, which read as tests waiting on deadlines; measured afterwards in
+pairs it was 0.86x and 0.98x, and the four-fold was a loaded machine. The
+verdict — survived or killed — does not care how loaded the machine is.</p>
 <h2 id="hostile-input-is-assumed">Hostile input is assumed<a class="headerlink" href="#hostile-input-is-assumed" title="Permanent link">&para;</a></h2>
 <p>Everything a replica receives comes off a network, so every decoder is a trust
 boundary and every decoder is fuzzed. This found <strong>five</strong> states a snapshot could

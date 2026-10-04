@@ -690,7 +690,9 @@
 <li><strong>Pure Go, <code>CGO_ENABLED=0</code>.</strong> The engine has no dependencies at all.</li>
 <li><strong>100% statement coverage</strong>, error branches included. It is a CI gate, not a
   goal. A branch no input can reach is a design smell — restructure until the
-  branch is either reachable or gone.</li>
+  branch is either reachable or gone. And it says every line runs, not that
+  anything would notice if a line were wrong: see <a href="../methodology/#systematically-over-every-refusal">what deleting every refusal
+  found</a>.</li>
 <li><strong>Six architectures.</strong> amd64 and arm64 natively; riscv64, loong64, ppc64le and
   s390x under qemu. s390x is big-endian, which is what keeps the deterministic
   encodings honest.</li>
