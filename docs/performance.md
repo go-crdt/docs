@@ -1,5 +1,7 @@
 # Performance
 
+*Copied from [go-crdt/crdt `docs/performance.md`](https://github.com/go-crdt/crdt/blob/8aefdc0/docs/performance.md) at `8aefdc0` (v0.55.3). This page is a copy: when the two differ, the one in the crdt repository is the measurement and this is a stale transcript of it.*
+
 ## On the trace everybody publishes against
 
 The sequential editing traces at [josephg/editing-traces](https://github.com/josephg/editing-traces)
@@ -16,7 +18,7 @@ Apple M4 Max, Go 1.26.4, `darwin/arm64`:
 | apply the same history as a peer's operations | **52.9 ms** — 204 ns/operation |
 | deliver it **back to front**, nothing applicable until the last operation | **0.25 s** |
 | memory held afterwards | **4.3 MiB** — 24.6 bytes per character including tombstones |
-| the document encoded | **620 KB** — 5.9 bytes per visible character |
+| the document encoded | **260 KB** — 2.5 bytes per visible character |
 
 Reproduce it, and check the result against the recorded final text:
 
@@ -40,56 +42,519 @@ Every implementation is driven the way its own published benchmark drives it,
 and every run rebuilds the document and compares it against the `endContent`
 recorded in the trace before any time is reported — a replay that produces the
 wrong text fails rather than printing a number. Verification is outside the
-clock. The harness is in [`docs/comparison/`](https://github.com/go-crdt/crdt/tree/main/docs/comparison): one file with one
+clock. The harness is in [`docs/comparison/`](https://github.com/go-crdt/crdt/blob/main/docs/comparison/): one file with one
 timing loop and one adapter per library, so the measurement cannot differ
 between them.
 
-Apple M4 Max (16 cores, 128 GiB), macOS 26.6.1, Go 1.26.4 `darwin/arm64`,
-Node v26.4.0. Ten replays of the whole 259 778-edit trace per implementation;
-the median is quoted and the full spread is in the last column.
+Apple M4 Max (16 cores, 128 GiB), macOS 26.6.2, Go 1.26.4 `darwin/arm64`,
+Node v26.4.0. Twelve interleaved rounds of
+[`docs/comparison/paired.js`](https://github.com/go-crdt/crdt/blob/main/docs/comparison/paired.js) — one replay per arm in
+rotation, each process staying warm — on a machine whose `load1` fell from 4.7 to
+3.1 across the run and never rose above 6.7. The `×` column is the **median of
+the per-round ratios**, which is what pairing buys; the `min–max` column is the
+spread of the raw times.
 
 | Implementation | Runs on | Replay (median) | ns/edit | × ours | min–max |
 |---|---|---|---|---|---|
-| diamond-types 1.0.2 | Rust → WebAssembly | **18.4 ms** | 71 | **0.76×** | 17.7–23.8 ms |
-| **go-crdt/crdt 0.4.0** | Go | **24.1 ms** | 93 | 1.00× | 23.9–24.1 ms |
-| loro-crdt 1.14.1 | Rust → WebAssembly | 692 ms | 2 662 | 28.7× | 573–1007 ms |
-| yjs 13.6.32 | JavaScript | 3 079 ms | 11 851 | 127.6× | 3068–3141 ms |
-| @automerge/automerge-wasm 1.0.0-preview.0 | Rust → WebAssembly | 8 262 ms | 31 803 | 342.5× | 8235–8497 ms |
-| @automerge/automerge 3.4.1 | Rust → WebAssembly, JS wrapper | 26 492 ms | 101 980 | 1098× | 25 660–30 672 ms |
+| diamond-types 1.0.2 | Rust → WebAssembly | **18.5 ms** | 71 | **0.91×** | 17.7–31.4 ms |
+| **go-crdt/crdt** | Go | **20.0 ms** | 77 | 1.00× | 19.5–21.1 ms |
+| list-positions 2.0.0 (Fugue) | JavaScript | 173.1 ms | 666 | 8.74× | 168.5–211.2 ms |
+| loro-crdt 1.16.3 | Rust → WebAssembly | 186.2 ms | 717 | 9.31× | 185.1–213.4 ms |
+| yjs 13.6.33 | JavaScript | 3 101 ms | 11 936 | 156× | 3 073–3 216 ms |
+| @automerge/automerge 3.5.0 | Rust → WebAssembly, JS wrapper | 3 875 ms | 14 916 | 194× | 3 858–4 069 ms |
+| @automerge/automerge-wasm 1.0.0-preview.0 | Rust → WebAssembly | 8 247 ms | 31 748 | 411× | 8 197–8 394 ms |
 
-**diamond-types is faster than we are**, by a third, and that is the result. It
-is the fastest text CRDT anyone has published and it stays that way here. The
-honest reading of this table is that we are in its range — same order of
-magnitude, same trace, same machine — and ahead of everything else measured.
+**diamond-types is still faster than we are**, by about a tenth, and that is the
+result. It is the fastest text CRDT anyone has published and it stays that way
+here. Its one wide round — 31.4 ms against a median of 18.5 — is its native
+module warming up on the first round; every later round is within 17.7–20.2 ms.
 
-Our row is 0.4.0. The index over runs described below arrived after this table
-was measured and takes the replay to 18.4 ms, on the Go benchmark that put 0.4.0
-at 23.4 ms in the same session — level with diamond-types on this trace, by a
-measurement that agrees with this one to within 3%. The table stands as it was
-taken; the other implementations have not been re-run.
+The honest reading is that we are in its range on this trace, and ahead of
+everything else measured. What that costs in a property rather than throughput is
+the section after next.
+
+### What re-taking it showed
+
+The table this replaces was taken in blocks — each library its own command, its
+own stretch of wall-clock time — before `paired.js` existed. Re-taking it is how
+three things came out.
+
+**The instrument reproduces what did not change.** diamond-types and
+`automerge-wasm` are the same versions as before and land on the same numbers:
+18.4 → 18.5 ms and 8 262 → 8 247 ms. Yjs moved one patch release and 3 079 →
+3 101 ms. Nothing here says the new protocol measures differently from the old
+one, which is what makes the two rows that *did* move worth reading.
+
+**Automerge is 6.9× faster than it was, and the old figure was right when it was
+taken.** 3.4.1 published at 26 492 ms; 3.5.0 reads 3 875 ms. Installed side by
+side and run alternately on this machine, 3.4.1 reads 26 843–28 731 ms and 3.5.0
+reads 3 997–4 016 ms, so the change is the library's and not ours. It also
+reverses the bottom of the table: the JS wrapper is now **twice as fast as the
+raw WebAssembly binding** it wraps, where it used to be three times slower.
+
+**Loro reads 186 ms where 692 ms was published, and the version is not the
+reason.** `loro-crdt` moved 1.14.1 → 1.16.3, so that was the first thing to
+check: 1.14.1 reinstalled and run today reads 198–216 ms. The adapter has been
+touched by exactly one commit — the one that introduced this harness and
+published that table — and Node is the same v26.4.0, and the published protocol
+(`--runs 10`) reproduces at 192 ms. So: not the version, not the adapter, not the
+runtime, not the protocol.
+
+What is left is the state of the machine during that block, and the published row
+carries the mark of it — its spread was **573–1007 ms, a factor of 1.76**, where
+every other row in that table spanned 1.02 to 1.34. Contention of the right size
+does reach that magnitude: under twelve busy loops loro barely moves (191 → 197
+ms), but under thirty-two, three times oversubscribed, it reads 397–551 ms. That
+is the neighbourhood of the published figure without being a proof of it, and it
+is as far as this can be taken — the run itself is not repeatable.
+
+**That is the third thing a block design cost this document**, after the Fugue
+row being 14% out and the diamond-types comparison being made across two
+sessions. This one is the worst of the three and the least visible: a single row
+3.5× too slow while every row around it was correct, which is exactly what giving
+each library its own stretch of time allows and exactly what nothing in the
+output says.
+
+### What non-interleaving costs
+
+The table above prices throughput. This row prices a **property**.
+
+`crdt` is an RGA, which is proved free of *forward* interleaving and exhibits the
+*backward* kind — type a word, move the cursor back, type another, and somebody
+else's concurrent word can land between yours. See `doc.go` and
+`TestTwoOfYourCharactersStayTogetherWhenYouTypeForwards`. Fugue (Weidner &
+Kleppmann, *The Art of the Fugue*) is proved free of both, and `list-positions`
+is its authors' implementation.
+
+So: what would that guarantee cost? It is the `list-positions` row in the table
+above — **173 ms against our 20 ms, 8.74×**. Four runs on four occasions put it
+at 8.13×, 8.40×, 8.60× and 8.74×, and they line up the way the section below
+predicts: the lowest came from the block control and the highest from the
+quietest machine, because contention costs our shorter arm more than it costs
+Fugue's and so pulls the ratio down.
+
+**About an order of magnitude**, then, and — worth saying because the Fugue paper
+compares itself to Yjs — roughly eighteen times faster than Yjs while doing more.
+
+Two things this does not measure. It crosses languages: Fugue here is
+JavaScript and we are Go, the same caveat the `Runs on` column carries for every
+other row. And its saved document is JSON — 493 KB against our 260 KB of binary —
+which compares encodings, not designs, so it is left out of the size table below.
+
+#### The first version of this row said 9.6×, and that was 14% too high
+
+It was measured by running `bench.js fugue`, then `bench.js yjs`, then the Go
+benchmark: each arm its own command, each its own stretch of wall-clock time. The
+machine was busy, the text said so, and it excused itself on the reasoning that
+whatever the machine was doing landed on all three alike.
+
+It does not land on all three alike. That is worth more than the row it corrects.
+
+Under twelve busy loops, interleaved so that every arm meets the same machine:
+
+| | ours | Fugue | Fugue ÷ ours |
+|---|---|---|---|
+| spare cores | 20.9 ms | 177 ms | **8.4×** |
+| twelve busy loops | 42.5 ms (**×2.04**) | 227 ms (×1.28) | **5.4×** |
+
+Contention costs us twice what it costs Fugue, so a busy machine moves the ratio
+by a third — *towards* Fugue. Four things follow.
+
+**A busy machine flatters whatever you are slower than.** The penalty fell
+hardest on the fastest arm and least on the slowest — ours ×2.04, Fugue ×1.28,
+Yjs ×1.23 — so contention shrinks a lead rather than distributing itself. A
+comparison run on a loaded workstation understates whoever is winning, and the
+error is not noise: it has a direction.
+
+**Most of that is the length of the window, not the language.** A 21 ms
+measurement loses a whole scheduling quantum where a 180 ms one absorbs it, and
+the fastest implementation necessarily has the shortest window. Timing eight
+consecutive replays under one clock — `--repeats ours=8`, so our sample lasts
+168 ms like Fugue's — takes our inflation from ×2.04 to **×1.42** and the ratio
+from 5.4× back to 7.6×. That is more than half of the gap, and it is not all of
+it: at equal window length we still lose somewhat more than Fugue does.
+
+**The minimum recovers some of the rest, and the literature says why it cannot
+recover all of it.** Chen and Revels model the environment as adding delay and
+never removing it (*Robust benchmarking in noisy environments*, IEEE HPEC 2016,
+the strategy in Julia's `BenchmarkTools`): if every error term is positive then
+the smallest sample is the one with the least error in it, which is why they
+estimate with the minimum rather than the mean or the median. On the contended
+run the minimum does pull the ratio from 5.4× back to 7.4× without any change to
+how the arms are driven. But their equation (9) is the reason it stops there —
+repetition removes a delay that *sometimes* fires, not one that fires on every
+execution, and a starved CPU is the second kind. 7.4× is still 12% short of 8.4×.
+The minimum is a better estimator, not a substitute for a machine with a spare
+core.
+
+**A load average cannot label a measurement.** It is an exponential average over
+a minute, so it lags in both directions. The first round of the contended run
+read `load1` 10.69, a value the uncontended block control had spent its whole run
+inside, while the twelve busy loops were already there and every arm was already
+slow: ours 27.5 ms against 19.9–21.8, Fugue 215 ms against 171–191. `paired.js`
+records `load1` beside every timing so a reader can see what it said, not so a
+result can be justified by it.
+
+Why it survived: **this document already had the habit, for the comparison it
+makes often.** Every measurement of one of our releases against another says how
+it was taken — beside the release before it on the same machine in one session,
+and the UTF-16 pair alternately, build against build. It was the comparisons with
+*other* implementations, made rarely, that were left to whatever the machine was
+doing. The discipline was there; it had simply never been pointed outward.
+
+One thing this does *not* say: that running each implementation as its own
+command is wrong. `--block` does exactly that with the same processes and the
+same code, and on a machine whose load is steady it agrees with the interleaved
+form to within the spread — 8.1× against 8.4×. Blocks are not wrong; they are
+unprotected, and nothing in their output says which of the two they were. The
+table above them was taken that way, before `paired.js` existed, and has not been
+re-run.
 
 ### Document size, where we do badly
 
 Encoding the replayed document:
 
-| Implementation | Encoded document |
-|---|---|
-| diamond-types 1.0.2 | 109 KB |
-| @automerge/automerge 3.4.1 | 129 KB |
-| yjs 13.6.32 (V2 encoding) | 160 KB |
-| loro-crdt 1.14.1 | 251 KB |
-| yjs 13.6.32 (V1 encoding) | 311 KB |
-| **go-crdt/crdt 0.5.0** | **620 KB** |
+| Implementation | Encoded document | Through gzip -6 | Ratio |
+|---|---|---|---|
+| diamond-types 1.0.2 | 109 KB † | 93 KB | 1.17× |
+| @automerge/automerge 3.4.1 | 129 KB | **129 KB** | **1.00×** |
+| yjs 13.6.32 (V2 encoding) | 160 KB | 70 KB | 2.30× |
+| loro-crdt 1.15.1 | 251 KB | 193 KB | 1.30× |
+| yjs 13.6.32 (V1 encoding) | 311 KB | 105 KB | 2.96× |
+| **go-crdt/crdt**, format version 8 | **260 KB** | **113 KB** | **2.31×** |
+| *go-crdt/crdt 0.15.0* | *478 KB* | *116 KB* | *4.13×* |
+| *go-crdt/crdt 0.14.0* | *527 KB* |
+| *go-crdt/crdt 0.5.0* | *620 KB* |
 | *go-crdt/crdt 0.4.0, when this was measured* | *2 663 KB* |
+
+**Re-verified on 2026-09-30, and every row reproduces.** Sizes do not depend on
+what the machine was doing, so this half of the comparison was never exposed to
+what the timing table above had to be re-taken for — and saying so is only worth
+anything because it was checked: diamond-types at 108 996 bytes, Yjs at 159 929
+and 311 038, ours at 259 890, all to the byte.
+
+Each row is labelled with the version that produced it — including when the pin
+moves under it, as `loro-crdt` has twice. The harness installs **1.16.4** today;
+it encodes this document into the same **251 391 bytes** as 1.16.3, to the byte,
+and a paired run against it replays in 188.7 ms, inside the 185.1–213.4 ms the
+table above records. Neither row is re-taken for it, because a row measured on a
+different day under a different load is the thing this page spent #132 removing.
+
+Two other versions have moved without moving a format either. **Automerge 3.5.0
+encodes this document into exactly the same 129 103 bytes as 3.4.1** — the 6.9×
+it gained in speed cost nothing and bought nothing here — and loro 1.16.3 lands
+33 bytes from 1.15.1 on a 251 KB document. So the table is current to within
+those 33 bytes, not merely correct as taken.
 
 This is what the comparison was for. At 0.4.0 ours was between eight and
 twenty-four times larger than anyone else's, because `Snapshot` wrote one record
 per character while everyone else writes runs. Version 2 of the format writes
-runs too, which took it to 620 KB — but diamond-types still encodes the same
-document in 109 KB, so the gap is now a factor of six rather than twenty-four,
-and it is still a gap. What remains is that the others also compress the text
-itself; ours is 182 KB of characters written plainly, which already exceeds their
-whole document.
+runs too, which took it to 620 KB.
+
+† **diamond-types compresses its text inside its own format**, so its first
+column is not an uncompressed figure. `Cargo.toml` has `default = ["lz4",
+"storage"]`, and `src/list/encoding/encode_oplog.rs` puts content in a
+`ContentCompressed` chunk for any document over twenty bytes:
+
+```rust
+// Right now I'm compressing content whenever len > 20.
+const MIN_COMPRESSED_LEN: usize = 20;
+```
+
+Its text — the part that is 182 KB of plain characters in ours — is LZ4'd in
+there. That is corroborated by its gzip ratio: 1.17× on a document whose largest
+component is English prose is what is left when the prose is already compressed.
+(The crate's defaults are what is quoted; the feature flags the
+`diamond-types-node` build uses were not checked.)
+
+So the first column compares one format that compresses the biggest thing in the
+file against five that do not, under a single heading. The second column is the
+one that compares the same operation applied to everybody.
+
+### Uncompressed is not the only column, and the other one says something else
+
+Uncompressed we are third of six at version 8, behind diamond-types and
+Automerge; at version 6 we were last. **Through gzip we are fourth of six**,
+ahead of Automerge and Loro, and within a quarter of diamond-types. Both numbers
+are true; this page reported only the first one for several releases, which
+overstated the gap.
+
+The **ratio** is the part worth reading. **Automerge does not compress at all**:
+129 103 bytes in, 129 161 out. It grows by 58 bytes, which is gzip's header on a
+stream with nothing left to find. diamond-types manages 1.17×, Loro 1.30×.
+
+Ours was 4.13× and is now 2.31×, and what is left of it is the text: the
+structure is 78 KB with next to nothing in it for a compressor to find, and the
+182 KB of English prose beside it is not.
+
+Run-length encoding is not a technique to weigh here, it is the baseline: the
+diamond-types encoding module opens by saying it "is modelled after the
+run-length encoding in Automerge and Yjs", so all three implementations ahead of
+us use it and the fastest and smallest says so in its first paragraph.
+
+The 4.13× was a direct measurement of how much redundancy version 6 left in the
+file, and it was the same finding as the field-by-field accounting below arrived
+at from the other side: three columns held one repeated value and cost 15% of the
+file, because there was one encoding here where Automerge picks between a
+run-length, a boolean and a delta encoder per column. Its 1.00× is what those
+look like from outside. Version 8 picks per column too, and those three columns
+now cost twelve bytes between them.
+
+Where it matters depends on who is storing the bytes. `gitstore` writes through
+git, which deflates every object; `pgstore` writes a `bytea`, which Postgres
+compresses once it is large enough. Both collect most of that 4.13× without
+anyone doing anything. `DirStore` and `MemoryStore` do not, and neither does a
+transport. See [issue #88](https://github.com/go-crdt/crdt/issues/88).
+
+### What the gap actually was
+
+This page used to say the rest was the text: "ours is 182 KB of characters
+written plainly, which already exceeds their whole document." That was true and
+it was not the answer. If the text is 182 KB of 620, something else is 438 KB,
+and 438 KB is four times diamond-types' entire document — so compressing the
+text would have left most of the gap standing.
+
+That has since been measured rather than reasoned about, on version 6:
+
+| | Bytes |
+|---|---|
+| the snapshot | 478 474 |
+| its text column | 182 315 → 49 637 through gzip (3.67×) |
+| everything else | 296 159 |
+| the whole thing through gzip | 115 897 (4.13×) |
+| **compressing only the text** | **345 796 (1.38×)** |
+
+Of the 362 KB a general-purpose compressor removes from this file, the text is
+**133 KB of it and the structure 230 KB**. The text is the largest single
+component of the file and it is not where most of the removable redundancy is;
+those are different questions. Compressing the text is worth 1.38× on its own —
+worth having, and much less work — but the columns are where the larger share
+sits. This is the same conclusion the paragraph above reached in 2026 by
+subtraction, with the number attached.
+
+`TestSnapshotBudget` accounts for every byte `Snapshot` writes, by the field
+that wrote it. On the same document, under version 2:
+
+| Field | Bytes | Share |
+|---|---|---|
+| deletions | 299 244 | 48.3% |
+| the text | 182 315 | 29.4% |
+| run identities | 42 444 | 6.8% |
+| origins | 42 382 | 6.8% |
+| clocks | 31 620 | 5.1% |
+| run and field lengths | 21 857 | 3.5% |
+
+The deletions were the largest thing in the file, larger than the text, and on
+their own nearly three times diamond-types' whole document. Half of that — 148 KB
+— was one field: the sequence number of the operation that did the deleting,
+written in full at three bytes each, 50 276 times.
+
+Version 3 writes it as a signed step from the last sequence number that site
+deleted with. A person deleting text works through it rather than jumping about,
+so the step is usually one byte. Measured before it was built, on this trace:
+
+| That field, written as | Bytes |
+|---|---|
+| the number itself (version 2) | 148 385 |
+| **a step from the previous deletion (version 3)** | **55 828** |
+| a step from the run's own sequence | 117 771 |
+
+which is what took the document from 620 KB to 527 KB.
+
+### Then the same question, of what was left
+
+With the deletions halved, the three fields under them were 116 KB between
+them, and the same measurement answered the same way:
+
+| Field | In full | As a step | |
+|---|---|---|---|
+| run identities | 42 444 | **31 273** | a step from the last run by that site |
+| origins | 42 382 | **25 484** | a step from the last origin with that site |
+| clocks | 31 620 | **10 824** | the distance above the run's own sequence |
+
+The clocks are the interesting one: 10 824 bytes is one byte per run, and it is
+not a coincidence. A clock can never fall below its own sequence number — a
+site's clock advances at least once per operation it issues — so the distance
+between them is small, unsigned, and needs no sign bit. Writing it that way also
+means a snapshot can no longer express a clock the loader would have had to
+refuse: the invariant moved out of a check and into the format.
+
+Version 4 writes all three. 527 KB to 478 KB, and 620 KB to 478 KB since the
+runs were introduced — a 23% cut in two steps, both of them measured first.
+
+What is left is mostly the text: 182 KB of it, 38% of the file, written plainly
+because this package has no dependencies and a compressor is a dependency. The
+deletions are still 43%, but three quarters of that is now the offsets and spans
+themselves rather than the identities attached to them.
+
+### The document size gap is an encoding, not a compressor
+
+At version 4 a real document encodes to 478 KB where diamond-types takes 109 KB,
+and this page used to put that down to the text being written plainly. It is not
+the text. Compressing the snapshot as it stands takes it to 148 KB — still a
+third bigger than their whole document — because the fields are interleaved: a
+compressor looking for repetition sees a run's identity beside its text beside
+its deletions.
+
+Written one field at a time, each column is a stream of similar numbers, and a
+compressor is very good at those. The same document, same fields, same step
+encodings, laid out in columns and compressed per column:
+
+| Column | Raw | Compressed |
+|---|---|---|
+| run sites | 10 824 | **13** |
+| clocks | 10 824 | **13** |
+| origin sites | 10 824 | **14** |
+| deletion counts | 10 850 | 3 978 |
+| run lengths | 11 005 | 6 732 |
+| origin sequences | 14 660 | 10 824 |
+| run sequences | 20 449 | 16 720 |
+| deletion fields | 206 687 | **18 181** |
+| the text | 182 315 | 40 228 |
+| **total** | **478 438** | **96 703** |
+
+Against diamond-types' 111 616 bytes that is **87%**. The deletion fields are the
+sharpest: 206 KB to 18, because a column of small gaps and spans repeats itself
+in a way the same numbers scattered between other fields do not.
+
+#### Which compressor, measured rather than assumed
+
+Every one of these is pure Go. Same columns, best setting of each:
+
+| | Total | |
+|---|---|---|
+| **brotli** (`andybalholm/brotli`, q11) | **96 703** | |
+| lzma (`ulikunitz/xz`) | 109 149 | +13% |
+| zstd (`klauspost/compress`) | 109 201 | +13% |
+| xz | 109 564 | +13% |
+| flate (standard library) | 112 211 | +16% |
+
+brotli wins on every column, including the small-varint streams where it would
+be least expected. Two settings were measured rather than guessed: the window
+must be at least 2^20 — at 2^16 it costs 2.4 KB, and past 2^20 nothing changes —
+and compressing **per column beats one stream**, 96 703 against 97 811, so the
+column boundaries are worth more than the redundancy across them.
+
+That is the one dependency worth taking: it buys 14% against the next best,
+where zstd's advantage was one column.
+
+#### And what it costs, which decides the setting
+
+brotli's top quality is very slow. The ladder, per column, on the same 478 KB:
+
+| Quality | Per column | vs diamond-types | Encode |
+|---|---|---|---|
+| q4 | 112 215 | 101% | 5 ms |
+| **q5** | **108 266** | **97%** | **7 ms** |
+| **q9** | **106 169** | **95%** | **14 ms** |
+| q10 | 98 686 | 88% | 167 ms |
+| q11 | 96 703 | 87% | 425 ms |
+
+Quality 5 is already ahead of them, at seven milliseconds. The cliff is between
+9 and 10: fourteen milliseconds becomes a hundred and sixty-seven, for seven
+kilobytes. So q9 is the setting to default to — ahead of diamond-types, and
+costing about what zstd costs — and q11 is for an archive that is written once.
+
+Decompression does not have this problem: 2 ms, 292 MB/s, and that is the side
+that runs whenever a document is opened.
+
+This is also the honest answer to whether one of our own compressors should be
+used instead. `go-compressions/deflate` accelerates match extension with SIMD,
+but DEFLATE's density is what it is — 112 KB here — so the SIMD buys time on a
+format that cannot reach the number. Where a SIMD brotli encoder would pay is
+exactly the q10 and q11 rows, and what it would buy there is the 167 or 425
+milliseconds rather than any bytes. q9 does not need it.
+
+#### What is not decided by this
+
+`Snapshot` says the same state is the same bytes, and every format change so far
+has kept that. A compressor's output is deterministic for a build and not
+promised across versions of the library, so compression belongs beside the
+format rather than inside it: the canonical form stays the columnar bytes, and
+whoever stores or sends them compresses. A plain whole-blob compression of the
+columnar layout gives 97 811 rather than 96 703, which is the price of keeping
+the boundary in the right place.
+
+#### And so, version 5
+
+The format writes the columns. Each is length-prefixed, so whoever stores a
+snapshot can take them apart and compress them one at a time. Measured on the
+same document: **115 KB with the standard library's flate**, against 148 for
+version 4, and about 106 with brotli at quality 9 — under diamond-types' 109,
+with the one dependency and without it we are level.
+
+Small documents pay a little for it: nine column lengths is nine bytes, so the
+version 2 fixture grows from 96 bytes to 105. This is a format for documents,
+and a document with two runs in it is not the one the 478 KB came from.
+
+#### And so, version 8
+
+Version 5 gave every field a column and left every column one encoding, which is
+a uvarint per value however many times that value is the same one. Version 8
+gives a column groups: a run is a count and a value, and everything else is a
+literal stretch. It also splits the deletion fields, which version 5 wrote as one
+column of gap, span, site and step over and over, into four columns of one kind
+of number each — interleaved, no two neighbours are alike and nothing repeats.
+
+On automerge-paper, **478 474 bytes to 259 890**, and the three columns that
+started [issue #88](https://github.com/go-crdt/crdt/issues/88) from 71 924 bytes
+to twelve:
+
+| Column | Version 6 | Version 8 | over |
+|---|---|---|---|
+| text | 182 315 | 182 244 | 182 315 values |
+| run sequence steps | 20 449 | 20 452 | 10 824 |
+| deletion sequence steps | 55 828 | **17 975** | 50 276 |
+| origin sequence steps | 14 660 | 14 664 | 10 824 |
+| run lengths | 11 005 | 10 918 | 10 824 |
+| deletion counts | 10 850 | 9 038 | 10 824 |
+| deletion spans | 50 297 | **3 048** | 50 276 |
+| deletion gaps | 50 286 | **1 483** | 50 276 |
+| origin sites | 10 824 | **6** | 10 824 |
+| run sites | 10 824 | **4** | 10 824 |
+| clocks | 10 824 | **4** | 10 824 |
+| deletion sites | 50 276 | **4** | 50 276 |
+| **total** | **478 438** | **259 840** | |
+
+The threshold is measured rather than chosen. A run costs a count and a value;
+leaving a pair in the literals costs the two values and nothing else, while
+writing it as a run also costs the two group headers that cutting the literal
+stretch in half needs. Over these twelve columns a threshold of two costs 266 270
+bytes, three costs 259 840, four 259 808 and six 261 016. Three is where it
+turns, and it is the smallest number at which no column here is larger than
+writing it out plainly would have been — the two that are, run and origin
+sequence steps, are three and four bytes larger.
+
+**What this does not buy is compressed bytes.** Compressed per column, which is
+what a store does, version 6 is 112 211 bytes with the standard library's flate
+and version 8 is 110 487: 1.5%. Whole-blob gzip goes 115 897 to 112 522. A
+general-purpose compressor was already finding almost all of this; what version 8
+changes is the size of a snapshot nobody has compressed, which is what `DirStore`,
+`MemoryStore` and every transport hold, and it halves it.
+
+#### The compressed text chunk, and why nothing writes one
+
+diamond-types LZ4s its text for any document over twenty bytes, and the obvious
+next step here is the same thing with `compress/flate`. A version 8 column says
+in its first byte how it is stored, and the reader understands a deflated one, so
+a peer or a later release can send one without this build refusing the snapshot.
+Nothing here sends one. The numbers are why:
+
+| | Bytes |
+|---|---|
+| version 8 | 259 890 |
+| version 8 with the text column deflated | **128 270** |
+| version 8, compressed per column by whoever stores it | 110 487 |
+| the same, with the text column deflated first | 110 512 |
+
+It halves a snapshot nobody compresses and costs 25 bytes to everybody who does.
+And it costs the promise directly above: `Snapshot` says the same state is the
+same bytes, and two replicas on different builds of Go would stop agreeing about
+a document they both hold. So the reader learns it and the writer does not, which
+is the same order [#83](https://github.com/go-crdt/crdt/pull/83) shipped
+`OpSuperseded` in. Writing it is one constant, and it wants a caller that stores
+snapshots raw and does not need them comparable — which is a decision about
+callers rather than about the format.
 
 ### Memory
 
@@ -100,9 +565,10 @@ there is no figure for them here rather than a bad one.
 
 | Implementation | Held after replay | Per visible character |
 |---|---|---|
-| **go-crdt/crdt 0.4.0** | **4 034 KiB** | **39.4 B** |
-| yjs 13.6.32, `gc: true` (default) | 5 678 KiB | 55.5 B |
-| yjs 13.6.32, `gc: false` | 7 573 KiB | 74.0 B |
+| **go-crdt/crdt**, today | **4 541 KiB** | **44.3 B** |
+| yjs 13.6.33, `gc: true` (default) | 5 680 KiB | 55.5 B |
+| yjs 13.6.33, `gc: false` | 7 256 KiB | 70.9 B |
+| *go-crdt/crdt 0.4.0, when this was first taken* | *4 034 KiB* | *39.4 B* |
 
 Per *visible* character, because that is the only count the two agree on: the
 document ends with 104 852 characters, and we additionally hold 77 463
@@ -111,8 +577,22 @@ page comes from. Yjs's
 default `gc: true` discards deleted content, so the `gc: false` row is the
 closer comparison — and we are below both.
 
-Ours varied by not one byte across three runs; Yjs's readings spanned 5678–5997
-KiB (`gc: true`) and 7255–7573 KiB (`gc: false`).
+Re-taken on 2026-09-30. **Yjs reproduces** — 5 680 KiB against the 5 678 first
+published, and the `gc: false` row lands on 7 256, the bottom of the 7255–7573
+that was recorded then. **Ours grew**, from 4 034 KiB at 0.4.0 to 4 541 today,
+and the two sections below account for it: the index over runs, and the second
+summary for UTF-16 offsets, which took a block header from 144 bytes to 160 and
+the document from 4 372 KiB to 4 541. That growth was measured when it was made
+rather than discovered here; what this table had wrong was only that it went on
+quoting 0.4.0 while the rest of the page had moved on.
+
+We are still below both Yjs rows, by less than the old number claimed: 44.3 bytes
+per visible character against 55.5 and 70.9.
+
+Ours read 4 541, 4 541 and 4 547 KiB over three runs — an earlier version of this
+paragraph said it "varied by not one byte", which was true of 0.4.0 and is not
+true now. Yjs read 5 680, 5 680 and 5 998 (`gc: true`) and 7 256 three times
+(`gc: false`).
 
 ### What this does not say
 
@@ -127,15 +607,18 @@ KiB (`gc: true`) and 7255–7573 KiB (`gc: false`).
   benchmark, on newer hardware and without the update observer his harness
   registers. Our encoded size for Yjs, 159 929 bytes, matches his published
   `docSize` exactly, which is the check that this harness reproduces his.
-- Automerge measured **slower** than the 14 326 ms dmonad publishes, on faster
-  hardware. He pins `@automerge/automerge@^2.1.10` and this is 3.4.1. That
-  difference was not investigated, and no claim of a regression is made from one
-  measurement. The `automerge-wasm` row is the same trace against Automerge's
-  Rust core with the JavaScript document wrapper removed, which puts about two
-  thirds of the cost in the wrapper.
+- Automerge 3.4.1 measured **slower** than the 14 326 ms dmonad publishes, on
+  faster hardware — he pins `@automerge/automerge@^2.1.10`. That was left
+  uninvestigated here, and **3.5.0 has since settled it in the other direction**:
+  3 875 ms, well under his figure, measured against 3.4.1 alternately on this
+  machine at 26 843–28 731 ms. The `automerge-wasm` row is the same trace against
+  Automerge's Rust core with the JavaScript document wrapper removed; at 3.4.1
+  that removed about two thirds of the cost, and at 3.5.0 it **adds** cost — the
+  wrapper is now twice as fast as the raw binding.
 - Wrapping the whole Yjs replay in a single `doc.transact` makes it *slower*,
-  9 406 ms against 3 079 ms, so the per-edit form used here is both what Yjs's
-  own benchmark does and the faster of the two.
+  9 406 ms against the 3 079 ms the same session measured for the per-edit form,
+  so the form used here is both what Yjs's own benchmark does and the faster of
+  the two.
 - One `Automerge.change` per edit, rather than one for the trace, costs about
   101 µs/edit over the first 20 000 edits — Automerge's own benchmark batches,
   and this is why.
@@ -147,19 +630,92 @@ cd docs/comparison && npm install
 CRDT_TRACE=…/automerge-paper.json.gz node --expose-gc bench.js yjs --runs 10
 ```
 
+## Ten thousand clients on one file
+
+The trace above is one person typing. This is the other question: what happens
+when ten thousand of them are on the same document and the network is broken.
+
+`TestAHundredClientsAndABrokenNetwork` is a hundred by default and takes its
+size from the environment. What it does to them: partitions lasting several
+rounds, batches that never arrive at all, delivery shuffled and duplicated,
+clients that arrive long after the session started and are welcomed with a
+snapshot, clients that lose their connection **and go on typing**, clients that
+come back and have to be reconciled in both directions, clients that close the
+tab for good, processes restarted from a snapshot, and replicas throwing away
+what they were holding back. Everybody types near the front, so the same
+characters are contended.
+
+The claim, checked two ways: once the network heals, every client holds a
+**byte-identical** snapshot, and each agrees with itself — the index against the
+list it indexes, the counters against the blocks they count.
+
+| | 100 clients | 10 000 clients |
+|---|---|---|
+| rounds | 120 | 150 |
+| wall clock | 2.7 s | 2 m 08 s |
+| edits | 16 813 | 11 151 |
+| batches delivered / lost / duplicated | 48 245 / 7 005 / 778 | 13 556 / 4 849 / 310 |
+| reconciliations | 7 686 | 5 210 |
+| joined late / disconnected / reconnected / left | 69 / 50 / 26 / 2 | 7 085 / 6 185 / 4 052 / 441 |
+| edits made while disconnected | 3 167 | 1 959 |
+| restarts from a snapshot | 47 | 33 |
+| operations dropped while parked | 19 723 | 66 |
+| **agreeing at the end** | **95** | **9 586** |
+| the document | 5 713 characters, 2 404 tombstones | 5 144 characters, 489 tombstones |
+
+The test refuses to pass if the chaos did not happen: no losses, no duplicates,
+no restarts, no reconciliations, nobody joining, disconnecting, reconnecting or
+leaving, no offline edits, no deletions, or an empty document all fail it.
+
+Ten thousand clients do not each hold a connection to the other nine thousand
+nine hundred and ninety-nine, so the harness has what a real deployment has: a
+hub they sync against, which arbitrates nothing and is a replica like any other.
+Without it the run still converges and proves less — every client edits its own
+almost-empty copy and they meet once at the end. With it, three quarters of the
+edits land on a document somebody else has already been writing.
+
+### What actually grows with the number of clients
+
+A replica's memory is a function of the document, not of how many people are
+editing it: ten thousand clients each hold one document, and the document is the
+same size whoever holds it. (The 26.9 GiB above is this harness holding ten
+thousand of them in one process.)
+
+One thing does grow. A version vector carries an entry per site that has ever
+written, it is exchanged on every sync, and `OpsSince` walks it:
+
+| sites | version | per site | `OpsSince`, nothing owed | snapshot |
+|---|---|---|---|---|
+| 100 | 201 B | 2.0 B | 0.97 µs | 1 017 B |
+| 1 000 | 2 876 B | 2.9 B | 11.04 µs | 12 647 B |
+| 10 000 | 29 876 B | 3.0 B | 95.67 µs | 129 649 B |
+| 100 000 | 383 495 B | 3.8 B | 821.16 µs | 1 550 509 B |
+
+Linear, at about ten nanoseconds a site, which is what a map lookup costs. Said
+plainly for a deployment: a server telling ten thousand clients "you are up to
+date" once a second spends about a second of one core doing it, and reads a
+thirty-kilobyte version for each answer. That is the price of asking "what am I
+missing" with per-site vectors. It is not a defect and there is nothing cheaper
+to do inside a call that is handed the vector; batching or sharding it is the
+job of the protocol above.
+
+A composite's version is per part **and** per site, so it multiplies: 1 000 sites
+cost 4 758 bytes over one part and 47 979 over sixteen. That is the same argument
+`structured.Blocks` is built on, measured at the version rather than the part.
+
 ## Synthetic benchmarks
 
 On a document of 10 000 characters:
 
-| Benchmark | 0.1.0 | 0.2.0 | 0.3.0 | 0.4.0 | 0.5.0 |
-|---|---|---|---|---|---|
-| `InsertAtEnd` | 231 ns | 65 ns | 34.8 ns | 32.9 ns | **33.7 ns** |
-| `ApplyRemote` (10 000 operations) | 823 µs | 441 µs | 302 µs | 279 µs | **295 µs** |
-| `Load` | 1.48 ms | 1.02 ms | 830 µs | 756 µs | **613 µs** |
-| `String` | 34.7 µs | 31.0 µs | 27.4 µs | 23.7 µs | **23.6 µs** |
-| memory, one run | 107.7 B/char | 73.1 | 4.19 | 4.20 | **4.19** |
-| `ScatteredInsert` | | | | 12.3 µs | **0.37 µs** |
-| `SameOriginFlood` (5000 operations) | | | | 27.3 ms | **1.07 ms** |
+| Benchmark | 0.1.0 | 0.2.0 | 0.3.0 | 0.4.0 | 0.5.0 | today |
+|---|---|---|---|---|---|---|
+| `InsertAtEnd` | 231 ns | 65 ns | 34.8 ns | 32.9 ns | 33.7 ns | **36.4 ns** |
+| `ApplyRemote` (10 000 operations) | 823 µs | 441 µs | 302 µs | 279 µs | 295 µs | **351 µs** |
+| `Load` | 1.48 ms | 1.02 ms | 830 µs | 756 µs | 613 µs | **747 µs** |
+| `String` | 34.7 µs | 31.0 µs | 27.4 µs | 23.7 µs | 23.6 µs | **24.6 µs** |
+| memory, one run | 107.7 B/char | 73.1 | 4.19 | 4.20 | 4.19 | **4.19** |
+| `ScatteredInsert` † | | | | 12.3 µs | 0.37 µs | **0.41 µs** |
+| `SameOriginFlood` (5000 operations) | | | | 27.3 ms | 1.07 ms | **1.23 ms** |
 
 `go test -run '^$' -bench . -benchmem`. The last two arrived with 0.5.0; their
 0.4.0 column is the same benchmark run against the release before it.
@@ -168,6 +724,49 @@ The 0.5.0 column holds two changes and a busy machine, so it was taken beside th
 commit before it in the same session, which read 32.9 ns, 291 µs, 607 µs, 24.0 µs
 and 4.19 B/char. `Load` is the run-length snapshot format; what the index costs
 here is under a nanosecond of `InsertAtEnd` and 4 µs of `ApplyRemote`.
+
+**The `today` column was taken beside the 0.5.0 one**, not quoted across the
+fifty releases between them: both trees built and run alternately, six rounds
+each, medians. Measured that way the commit the 0.5.0 column describes reads
+34.98 ns, 304.89 µs, 641.27 µs, 25.23 µs and 1.17 ms — within 4–8% of what it
+published, which is what says the comparison is between the two versions and not
+between two sessions. Fifty releases cost 15% on `ApplyRemote` and 16% on `Load`
+and nothing anywhere else.
+
+### † A benchmark whose answer depended on how long you ran it
+
+`ScatteredInsert` inserted into a document it never stopped growing: one
+character per iteration, from the same `b.N` loop whose length Go chooses by
+ramping until a second has passed. So its answer was a function of `b.N` — and
+therefore of how fast the machine was that day, in the direction nobody expects.
+**A faster machine reaches a larger `b.N`, inserts into a larger document, and
+reports a worse figure.**
+
+On the commit that first published this row, that same code reads:
+
+| `-benchtime` | ns/op | the document it ends on |
+|---|---|---|
+| 1000x | **370** | 11 000 characters |
+| 10000x | 490 | 20 000 |
+| 500000x | 945 | 510 000 |
+| 1000000x | 1 300 | 1 010 000 |
+| *default (1s), here, today* | *1 246–1 514* | *1 010 000* |
+
+The **0.37 µs** this table used to quote is the 1000x reading. Nothing was wrong
+with the measurement; what was wrong was treating it as a quantity the code has.
+Run the same command on this machine today and it prints 1.3 µs — not because
+anything regressed, but because a second now buys a million iterations.
+
+The benchmark now rebuilds its document whenever it grows past 110% of
+`benchSize`, with the timer stopped, so the thing being measured is an insertion
+into a document of about ten thousand characters, which is what the row claims.
+It reads 360–410 ns from a hundred thousand iterations upward, and the default
+budget is thirty times that.
+
+**And there was no regression.** With the bounded benchmark run alternately on
+both trees, the 0.5.0 commit reads 405.8 ns and today reads 410.6 ns — 1.01×. The
+published 0.37 µs was about right for what it names; it just could not be
+obtained twice.
 
 ## What changed, and why
 
@@ -266,12 +865,15 @@ plain that nobody else pays that.
 Version 2 writes a run at a time — one header for a stretch one site typed
 consecutively, then its text, then the stretches of it that have been deleted —
 because everything about the characters in a run follows from the first one.
-**2 663 KB → 620 KB on the real trace, 25.4 → 5.9 bytes per visible character**,
+**2 663 KB → 260 KB on the real trace, 25.4 → 2.5 bytes per visible character**,
 and writing it is twelve times faster.
 
-Version 1 is still read, so a document stored by an older build opens; the test
-for that uses a snapshot produced by the v0.4.0 release rather than one this
+Version 1 was read until #99, so a document stored by an older build opened; the
+test for that used a snapshot produced by the v0.4.0 release rather than one this
 build wrote, because a fixture regenerated by the code it checks proves nothing.
+It went with the rest of versions 1 to 6: nothing holds those bytes, the project
+is in development, and every number quoted in this file is a measurement of a
+format, not a promise to read it.
 
 Two things had to be true for this to work, and one of them was not free. The
 runs written have to be the same on every replica holding the same operations,
@@ -339,8 +941,92 @@ collector work.
 A B-tree holding runs in its leaves, as diamond-types does, would pay for itself
 here: no per-run node, a depth of four rather than seventeen, and iteration from
 the leaves. It costs the pointer identity of a block, which the mark, the
-per-site index and every walk in `text.go` are written in terms of. That is the
-next thing to measure, not something to guess at.
+per-site index and every walk in `text.go` are written in terms of.
+
+#### The arithmetic, since it was measured rather than guessed at
+
+A block is **152 bytes**, and Go's size classes here are sixteen bytes apart, so
+it is allocated in the **160-byte class**: eight bytes of every block are paid
+for and unused. `TestBlockFitsItsSizeClass` pins this so it cannot drift.
+
+The tail is what decides it. `subMin` ends at 136; `subVis` and `subSup` fill the
+word to 144 exactly; `nsup` and `height` spill past it and cost a whole further
+word. Five bytes of summary buy sixteen bytes of allocation, on every block.
+
+Shaving that tail was looked at and rejected, which is worth recording so the
+next person does not look at it again:
+
+- `height` is an AVL height, computed from its children. It is structural, not a
+  priority that could be derived from the block's identity and dropped.
+- `nsup` could become a single bit — every use of it outside `split` is a test
+  against zero — but that alone leaves the block at 148 bytes, which is the same
+  size class. Nothing is saved.
+- Reaching 144 means capping `subVis` or `subSup` so that `height` can live in
+  the spare bits. A subtree's visible count is already `int32` for a stated
+  reason: two billion characters is eight gigabytes of text. Capping it lower
+  trades a bounded, honest limit for one that fails as silent corruption.
+
+So the block cannot lose a size class without giving something up, and what it
+would save is about 4% of what a real document holds.
+
+#### What the other answer is worth
+
+The B-tree removes the per-run node rather than shrinking it, and that is a
+different order of answer. `TestWhatTheBTreeWouldBuy` measures it the same way,
+by declaring the shapes and asking Go:
+
+| A run | Allocated | |
+|---|---|---|
+| today | 160 B | |
+| with no per-run index node | **112 B** | 30% less |
+| and iterating from the leaves | **96 B** | 40% less |
+
+The second line drops `left`, `right`, `up`, `subMin`, `subVis`, `subSup` and
+`height`; the third drops `next` and `prev` as well, since a B-tree iterates from
+its leaves and the backwards walk those exist for is what the index replaced.
+
+On the real trace that is **676 KiB of the 4 541 the document holds, about 15%**
+— against the 4% shaving the tail would have bought, for a change that gives up
+nothing. The B-tree's own internal nodes are not free, but at any sensible
+branching factor they are a few percent of the leaves.
+
+That was the case for spending a project on it. It was spent, and the prize did
+not survive contact — see below.
+
+#### It was built, and it does not pay
+
+The B-tree exists on the `perf/btree` branch: runs in the leaves, summaries in
+the parent, the AVL removed, the whole suite green on the real trace, and its
+answers compared against the AVL's on 104 852 positions and 10 050 integration
+walks before either was taken out.
+
+The table above is right about a run: 152 bytes becomes 120, which is the
+128-byte class instead of the 160-byte one. What it is wrong about is the
+sentence that follows it — that the internal nodes are a few percent of the
+leaves. They are not, because the leaves are not free either. A node carries one
+entry per thing below it, and an entry is two counts, the lowest-sorting key of
+what it holds, and a pointer: twenty-four bytes against the thirty-two a run
+gives back, before the slack of a node that is not full.
+
+That leaves one trade, and it was measured at both ends:
+
+| index | the document holds | allocations, integration walk |
+|---|---|---|
+| the AVL, today | **4 541 KiB** | **15.1k** |
+| B-tree, each node sized to what it holds | 4 389 KiB (−3.3%) | 30.1k (+99%) |
+| B-tree, each node with room to grow | 5 062 KiB (+11.5%) | 16.8k |
+
+A node sized to what it holds recopies all of its summaries on every insertion,
+which doubles the allocations of the walk the index exists to protect and cost
+22% of its time. A node with room to grow allocates like the AVL and costs more
+memory than it saves. The saving in the first row *is* the recopying; they are
+the same fact read two ways.
+
+Nothing here is an argument against the shape. The depth is five rather than
+seventeen and the descent is a scan of one cache line. It is an argument that a
+per-run node costs about what a per-run entry costs, so replacing one with the
+other buys nothing — and that is worth knowing before anyone spends the project
+again.
 
 ### A second summary, for UTF-16 offsets
 
