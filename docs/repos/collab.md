@@ -67,6 +67,36 @@ operation and once for its origin, which roughly doubles the encoded size agains
 small dense numbers. A server handing out small identities per session is
 cheaper, and it is the server that can guarantee uniqueness anyway.
 
+## Two carriers, and why there are two
+
+A browser gets `collab.WebSocket` — the session's own framing, four message kinds
+over a plain WebSocket with a kind byte and each field length-prefixed. Native
+peers get `collab.GRPC`, which carries the same session unchanged. One server
+serves both at once.
+
+The second one exists because of a measurement rather than a preference.
+Everything a session carries is already bytes `crdt` encoded and will check on
+arrival, so protobuf was describing fields nobody reads through it — and compiled
+to wasm its reflection and registry machinery cannot be linked away. The browser
+client, gzipped:
+
+| measured 2026-08-17 | |
+|---|---|
+| over gRPC | 4 461 KB |
+| over protobuf alone, no gRPC | 4 461 KB |
+| the CRDT alone | 633 KB |
+
+Those three are the figures that produced the decision and are dated rather than
+current: the gRPC one cannot be re-taken as a browser build at all, since
+`grpc.go` is `//go:build !js`. The WebSocket carrier's own size *is* current and
+reproducible — see the recipe in collab's README, which also records that it has
+grown from 919 KB to 1 535 KB since.
+
+The carrier cost more than everything it carried, so there are two now. Outside a
+browser none of that matters, which is why gRPC is still here — and why the
+WebSocket listener below, which carries a cookie across the upgrade, is about
+authenticating a gRPC session rather than about how a browser reaches the server.
+
 ## Backpressure
 
 A participant that stops reading cannot be allowed to hold up the document, and
