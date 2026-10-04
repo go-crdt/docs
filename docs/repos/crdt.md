@@ -91,11 +91,14 @@ later reader with a profiler.
 RGA keeps a run of characters typed one after another contiguous, even when
 someone else is typing at the same position, because each character's clock
 exceeds anything its typist had seen. It does not give the stronger guarantee
-Fugue proves for insertions made in other patterns. `Doc` is a small surface —
-`Insert`, `Delete`, `Apply`, `Snapshot` — precisely so a Fugue or YATA
-integration rule can replace the current one without disturbing anything that
-imports it. Version 0.1 ships RGA because it is the variant whose correctness can
-be demonstrated rather than argued.
+Fugue proves for insertions made in other patterns. What makes a Fugue or YATA
+integration rule able to replace this one is not that `Doc` is small — it has
+thirty-two exported methods now, most of them ways of reading a document rather
+than changing one — but that the rule is in none of them. Ordering concurrent
+insertions happens below `Insert` and `Apply`; nothing that imports this package
+can see which rule decided, only that every replica decided the same way. RGA is
+what ships because it is the variant whose correctness can be demonstrated rather
+than argued.
 
 ## Telling a view what changed
 
