@@ -532,6 +532,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#two-carriers-and-why-there-are-two" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two carriers, and why there are two
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backpressure" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -727,6 +738,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#two-carriers-and-why-there-are-two" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two carriers, and why there are two
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#backpressure" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -856,6 +878,47 @@ wire — a 64-bit identity is carried twice in every operation, once for the
 operation and once for its origin, which roughly doubles the encoded size against
 small dense numbers. A server handing out small identities per session is
 cheaper, and it is the server that can guarantee uniqueness anyway.</p>
+<h2 id="two-carriers-and-why-there-are-two">Two carriers, and why there are two<a class="headerlink" href="#two-carriers-and-why-there-are-two" title="Permanent link">&para;</a></h2>
+<p>A browser gets <code>collab.WebSocket</code> — the session's own framing, four message kinds
+over a plain WebSocket with a kind byte and each field length-prefixed. Native
+peers get <code>collab.GRPC</code>, which carries the same session unchanged. One server
+serves both at once.</p>
+<p>The second one exists because of a measurement rather than a preference.
+Everything a session carries is already bytes <code>crdt</code> encoded and will check on
+arrival, so protobuf was describing fields nobody reads through it — and compiled
+to wasm its reflection and registry machinery cannot be linked away. The browser
+client, gzipped:</p>
+<table>
+<thead>
+<tr>
+<th>measured 2026-08-17</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>over gRPC</td>
+<td>4 461 KB</td>
+</tr>
+<tr>
+<td>over protobuf alone, no gRPC</td>
+<td>4 461 KB</td>
+</tr>
+<tr>
+<td>the CRDT alone</td>
+<td>633 KB</td>
+</tr>
+</tbody>
+</table>
+<p>Those three are the figures that produced the decision and are dated rather than
+current: the gRPC one cannot be re-taken as a browser build at all, since
+<code>grpc.go</code> is <code>//go:build !js</code>. The WebSocket carrier's own size <em>is</em> current and
+reproducible — see the recipe in collab's README, which also records that it has
+grown from 919 KB to 1 535 KB since.</p>
+<p>The carrier cost more than everything it carried, so there are two now. Outside a
+browser none of that matters, which is why gRPC is still here — and why the
+WebSocket listener below, which carries a cookie across the upgrade, is about
+authenticating a gRPC session rather than about how a browser reaches the server.</p>
 <h2 id="backpressure">Backpressure<a class="headerlink" href="#backpressure" title="Permanent link">&para;</a></h2>
 <p>A participant that stops reading cannot be allowed to hold up the document, and
 cannot be silently skipped either — skipping an operation would leave that
