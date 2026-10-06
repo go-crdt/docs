@@ -50,25 +50,29 @@ pin exactly that, and it fails without the clock.
 
 ### Systematically, over every refusal
 
-Doing that by hand finds what you thought to try. On 2026-10-04 it was done
+Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
 mechanically instead, over every refusal in the files that read bytes somebody
 else wrote: walk the source for an `if` whose body returns a refusal, delete
 one, build, run the suite, restore, repeat.
 
-| | `collab` | `crdt` |
-| --- | --- | --- |
-| refusals and bounds taken as subjects | 126 | 104 |
-| deletions that did not compile — **not mutants** | 73 | 29 |
-| caught by the suite | 43 | 63 |
-| survived, at 100% of statements | 10 | 12 |
-| of those, **real** | **3** | 0 |
+| | `collab` | `crdt` | `crdt/structured` |
+| --- | --- | --- | --- |
+| refusals and bounds taken as subjects | 126 | 104 | 38 |
+| deletions that did not compile — **not mutants** | 73 | 29 | 19 |
+| caught by the suite | 43 | 63 | 14 |
+| survived, at 100% of statements | 10 | 12 | 5 |
+| of those, **real** | **3** | 0 | **1** |
+
+**268 subjects, 121 of them not mutants, 120 caught, 27 survivors, 4 real.**
+The three files on the right are the ones that decode a blob manifest, a cell
+and a record — `structured`'s trust boundary — and were run on 2026-10-06.
 
 The first row of numbers is not a result about the tests. Deleting
 `if err != nil { return err }` orphans the `err` the line above declared and
 the package stops building; a run that counts those as killed, or as survived,
 is wrong either way, so they are a third verdict.
 
-The three real ones were the same mistake three times: **a test asserting that
+Three of the four were the same mistake three times: **a test asserting that
 an error happened**, where the code after the deleted guard also fails and says
 something else. The clearest is a client that hangs up before sending anything,
 which was handed `InvalidArgument` and "a session must open with a join" — for
@@ -76,17 +80,32 @@ something it never did — where its own stream's `EOF` is the truth. All three
 are pinned now, each by naming the error its case is about rather than its
 existence.
 
-The nineteen that survived and were not real are worth naming rather than
+The fourth is a different shape, and the reason it is worth reading twice: what
+it protects is an **answer**, not an allocation. `decodeManifest` refuses a blob
+manifest whose byte count and chunk count disagree — "a file of no bytes has no
+chunks, and a file of some bytes has some". With that line deleted, a ten-byte
+manifest saying *one gibibyte, no chunks* reads as a file:
+
+| | |
+| --- | --- |
+| `Size` | 1 073 741 824, and says so is true |
+| `Missing` | 0 — there are no keys, so none are missing |
+| `Get` | nothing, and not ok |
+
+A gibibyte that nothing is waiting for and that never arrives, which is worse
+than an error because there is nothing to retry and nothing to report.
+
+The twenty-three that survived and were not real are worth naming rather than
 carrying as a worry. Counted by why each one survives:
 
 | | |
 | --- | --- |
-| a bound doubled one layer down | 9 |
+| a bound doubled one layer down | 13 |
 | a fast path — "no character here is more than one UTF-16 code unit, so the offset is the offset" | 6 |
 | only saves work: an empty batch not sent, a file not rewritten when nothing changed, one more `Recv` that returns the same error | 3 |
 | the same value by another line: `append([]byte(nil))` of nothing is nil too | 1 |
 
-The nine are what defence in depth looks like from a single-layer mutation: a
+The thirteen are what defence in depth looks like from a single-layer mutation: a
 kind check in a decoder whose own last line validates the operation anyway, a
 negative length refused again by the range check below it, a snapshot bound
 standing in front of the accounting that every promised operation appears
@@ -104,7 +123,7 @@ mutants, developers initially judged 85% of what was reported to them
 unproductive, and rules for suppressing those are what made the technique
 usable at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A
 View From Google*, IEEE TSE, 2021). Here the filtering is a reading of each
-survivor, which is affordable because there are twenty-two of them.
+survivor, which is affordable because there are twenty-seven of them.
 
 One caution, learned the hard way the same evening: a **duration** taken during
 a campaign measures the campaign. One mutant appeared to leave the suite four
