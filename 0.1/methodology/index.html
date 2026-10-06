@@ -802,7 +802,7 @@ user — whoever had seen more of the document when they typed is placed first,
 rather than whoever happens to hold the smaller identifier. A test was written to
 pin exactly that, and it fails without the clock.</p>
 <h3 id="systematically-over-every-refusal">Systematically, over every refusal<a class="headerlink" href="#systematically-over-every-refusal" title="Permanent link">&para;</a></h3>
-<p>Doing that by hand finds what you thought to try. On 2026-10-04 it was done
+<p>Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
 mechanically instead, over every refusal in the files that read bytes somebody
 else wrote: walk the source for an <code>if</code> whose body returns a refusal, delete
 one, build, run the suite, restore, repeat.</p>
@@ -812,6 +812,7 @@ one, build, run the suite, restore, repeat.</p>
 <th></th>
 <th><code>collab</code></th>
 <th><code>crdt</code></th>
+<th><code>crdt/structured</code></th>
 </tr>
 </thead>
 <tbody>
@@ -819,41 +820,78 @@ one, build, run the suite, restore, repeat.</p>
 <td>refusals and bounds taken as subjects</td>
 <td>126</td>
 <td>104</td>
+<td>38</td>
 </tr>
 <tr>
 <td>deletions that did not compile — <strong>not mutants</strong></td>
 <td>73</td>
 <td>29</td>
+<td>19</td>
 </tr>
 <tr>
 <td>caught by the suite</td>
 <td>43</td>
 <td>63</td>
+<td>14</td>
 </tr>
 <tr>
 <td>survived, at 100% of statements</td>
 <td>10</td>
 <td>12</td>
+<td>5</td>
 </tr>
 <tr>
 <td>of those, <strong>real</strong></td>
 <td><strong>3</strong></td>
 <td>0</td>
+<td><strong>1</strong></td>
 </tr>
 </tbody>
 </table>
+<p><strong>268 subjects, 121 of them not mutants, 120 caught, 27 survivors, 4 real.</strong>
+The three files on the right are the ones that decode a blob manifest, a cell
+and a record — <code>structured</code>'s trust boundary — and were run on 2026-10-06.</p>
 <p>The first row of numbers is not a result about the tests. Deleting
 <code>if err != nil { return err }</code> orphans the <code>err</code> the line above declared and
 the package stops building; a run that counts those as killed, or as survived,
 is wrong either way, so they are a third verdict.</p>
-<p>The three real ones were the same mistake three times: <strong>a test asserting that
+<p>Three of the four were the same mistake three times: <strong>a test asserting that
 an error happened</strong>, where the code after the deleted guard also fails and says
 something else. The clearest is a client that hangs up before sending anything,
 which was handed <code>InvalidArgument</code> and "a session must open with a join" — for
 something it never did — where its own stream's <code>EOF</code> is the truth. All three
 are pinned now, each by naming the error its case is about rather than its
 existence.</p>
-<p>The nineteen that survived and were not real are worth naming rather than
+<p>The fourth is a different shape, and the reason it is worth reading twice: what
+it protects is an <strong>answer</strong>, not an allocation. <code>decodeManifest</code> refuses a blob
+manifest whose byte count and chunk count disagree — "a file of no bytes has no
+chunks, and a file of some bytes has some". With that line deleted, a ten-byte
+manifest saying <em>one gibibyte, no chunks</em> reads as a file:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Size</code></td>
+<td>1 073 741 824, and says so is true</td>
+</tr>
+<tr>
+<td><code>Missing</code></td>
+<td>0 — there are no keys, so none are missing</td>
+</tr>
+<tr>
+<td><code>Get</code></td>
+<td>nothing, and not ok</td>
+</tr>
+</tbody>
+</table>
+<p>A gibibyte that nothing is waiting for and that never arrives, which is worse
+than an error because there is nothing to retry and nothing to report.</p>
+<p>The twenty-three that survived and were not real are worth naming rather than
 carrying as a worry. Counted by why each one survives:</p>
 <table>
 <thead>
@@ -865,7 +903,7 @@ carrying as a worry. Counted by why each one survives:</p>
 <tbody>
 <tr>
 <td>a bound doubled one layer down</td>
-<td>9</td>
+<td>13</td>
 </tr>
 <tr>
 <td>a fast path — "no character here is more than one UTF-16 code unit, so the offset is the offset"</td>
@@ -881,7 +919,7 @@ carrying as a worry. Counted by why each one survives:</p>
 </tr>
 </tbody>
 </table>
-<p>The nine are what defence in depth looks like from a single-layer mutation: a
+<p>The thirteen are what defence in depth looks like from a single-layer mutation: a
 kind check in a decoder whose own last line validates the operation anyway, a
 negative length refused again by the range check below it, a snapshot bound
 standing in front of the accounting that every promised operation appears
@@ -897,7 +935,7 @@ mutants, developers initially judged 85% of what was reported to them
 unproductive, and rules for suppressing those are what made the technique
 usable at all (Petrović &amp; Ivanković, <em>Practical Mutation Testing at Scale: A
 View From Google</em>, IEEE TSE, 2021). Here the filtering is a reading of each
-survivor, which is affordable because there are twenty-two of them.</p>
+survivor, which is affordable because there are twenty-seven of them.</p>
 <p>One caution, learned the hard way the same evening: a <strong>duration</strong> taken during
 a campaign measures the campaign. One mutant appeared to leave the suite four
 times slower, which read as tests waiting on deadlines; measured afterwards in
