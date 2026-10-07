@@ -48,7 +48,7 @@ user — whoever had seen more of the document when they typed is placed first,
 rather than whoever happens to hold the smaller identifier. A test was written to
 pin exactly that, and it fails without the clock.
 
-### Systematically, over every refusal
+## Deleting every refusal, not the ones somebody thought to try
 
 Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
 mechanically instead, over every refusal in the code that reads bytes somebody
