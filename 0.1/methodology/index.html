@@ -392,22 +392,38 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The instruments are checked against known breakage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#systematically-over-every-refusal" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deleting-every-refusal-not-the-ones-somebody-thought-to-try" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Systematically, over every refusal
+        Deleting every refusal, not the ones somebody thought to try
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#the-nine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The nine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#and-the-fifty-seven-that-were-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        And the fifty-seven that were not
+      
+    </span>
+  </a>
   
 </li>
       
@@ -706,22 +722,38 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The instruments are checked against known breakage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#systematically-over-every-refusal" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deleting-every-refusal-not-the-ones-somebody-thought-to-try" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Systematically, over every refusal
+        Deleting every refusal, not the ones somebody thought to try
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#the-nine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The nine
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#and-the-fifty-seven-that-were-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        And the fifty-seven that were not
+      
+    </span>
+  </a>
   
 </li>
       
@@ -801,72 +833,109 @@ decides is <strong>which</strong> order concurrent insertions take, and that is 
 user — whoever had seen more of the document when they typed is placed first,
 rather than whoever happens to hold the smaller identifier. A test was written to
 pin exactly that, and it fails without the clock.</p>
-<h3 id="systematically-over-every-refusal">Systematically, over every refusal<a class="headerlink" href="#systematically-over-every-refusal" title="Permanent link">&para;</a></h3>
+<h2 id="deleting-every-refusal-not-the-ones-somebody-thought-to-try">Deleting every refusal, not the ones somebody thought to try<a class="headerlink" href="#deleting-every-refusal-not-the-ones-somebody-thought-to-try" title="Permanent link">&para;</a></h2>
 <p>Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
-mechanically instead, over every refusal in the files that read bytes somebody
+mechanically instead, over every refusal in the code that reads bytes somebody
 else wrote: walk the source for an <code>if</code> whose body returns a refusal, delete
-one, build, run the suite, restore, repeat.</p>
+one, build, run the suite, restore, repeat. Five runs, finished 2026-10-07:</p>
 <table>
 <thead>
 <tr>
 <th></th>
-<th><code>collab</code></th>
-<th><code>crdt</code></th>
-<th><code>crdt/structured</code></th>
+<th>subjects</th>
+<th>not mutants</th>
+<th>caught</th>
+<th>survived</th>
+<th><strong>real</strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>refusals and bounds taken as subjects</td>
+<td><code>collab</code>, the wire</td>
 <td>126</td>
-<td>104</td>
-<td>38</td>
-</tr>
-<tr>
-<td>deletions that did not compile — <strong>not mutants</strong></td>
 <td>73</td>
-<td>29</td>
-<td>19</td>
-</tr>
-<tr>
-<td>caught by the suite</td>
 <td>43</td>
-<td>63</td>
-<td>14</td>
-</tr>
-<tr>
-<td>survived, at 100% of statements</td>
 <td>10</td>
-<td>12</td>
-<td>5</td>
+<td><strong>3</strong></td>
 </tr>
 <tr>
-<td>of those, <strong>real</strong></td>
-<td><strong>3</strong></td>
+<td><code>crdt</code>, operations and snapshots</td>
+<td>104</td>
+<td>29</td>
+<td>63</td>
+<td>12</td>
 <td>0</td>
+</tr>
+<tr>
+<td><code>crdt/structured</code>, the decoders</td>
+<td>38</td>
+<td>19</td>
+<td>14</td>
+<td>5</td>
 <td><strong>1</strong></td>
 </tr>
+<tr>
+<td><code>crdt/structured</code>, the rest</td>
+<td>242</td>
+<td>101</td>
+<td>108</td>
+<td>33</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td><code>collab</code>, the stores</td>
+<td>64</td>
+<td>20</td>
+<td>38</td>
+<td>6</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>574</strong></td>
+<td><strong>242</strong></td>
+<td><strong>266</strong></td>
+<td><strong>66</strong></td>
+<td><strong>9</strong></td>
+</tr>
 </tbody>
 </table>
-<p><strong>268 subjects, 121 of them not mutants, 120 caught, 27 survivors, 4 real.</strong>
-The three files on the right are the ones that decode a blob manifest, a cell
-and a record — <code>structured</code>'s trust boundary — and were run on 2026-10-06.</p>
-<p>The first row of numbers is not a result about the tests. Deleting
-<code>if err != nil { return err }</code> orphans the <code>err</code> the line above declared and
-the package stops building; a run that counts those as killed, or as survived,
-is wrong either way, so they are a third verdict.</p>
-<p>Three of the four were the same mistake three times: <strong>a test asserting that
-an error happened</strong>, where the code after the deleted guard also fails and says
-something else. The clearest is a client that hangs up before sending anything,
-which was handed <code>InvalidArgument</code> and "a session must open with a join" — for
-something it never did — where its own stream's <code>EOF</code> is the truth. All three
-are pinned now, each by naming the error its case is about rather than its
-existence.</p>
-<p>The fourth is a different shape, and the reason it is worth reading twice: what
-it protects is an <strong>answer</strong>, not an allocation. <code>decodeManifest</code> refuses a blob
-manifest whose byte count and chunk count disagree — "a file of no bytes has no
-chunks, and a file of some bytes has some". With that line deleted, a ten-byte
-manifest saying <em>one gibibyte, no chunks</em> reads as a file:</p>
+<p>The second column is not a result about the tests. Deleting
+<code>if err != nil { return err }</code> orphans the <code>err</code> the line above declared and the
+package stops building; a run that counts those as killed, or as survived, is
+wrong either way, so they are a third verdict and nearly half of everything
+tried.</p>
+<h2 id="the-nine">The nine<a class="headerlink" href="#the-nine" title="Permanent link">&para;</a></h2>
+<p>Four of them are one mistake: <strong>a test asserting that an error happened</strong>, where
+the code after the deleted guard also fails and says something else. The
+clearest is a client that hangs up before sending anything, which was handed
+<code>InvalidArgument</code> and "a session must open with a join" — for something it never
+did — where its own stream's <code>EOF</code> is the truth.</p>
+<p>The other five are each their own shape, and three are worth stating plainly.</p>
+<p><strong>A manifest that claims bytes it has no chunks for.</strong> Ten bytes saying <em>one
+gibibyte, no chunks</em> read as a file: <code>Size</code> reports a gibibyte and says that is
+true, <code>Missing</code> reports nothing missing because there are no keys to miss, and
+<code>Get</code> hands back nothing. A gibibyte that nothing waits for and that never
+arrives. The shape has a name — Sassaman, Patterson, Bratus, Locasto and
+Shubina call it a <em>parse tree differential</em> (Dartmouth TR2011-709, 2011), two
+readers taking different meanings from one input — and it is the argument for
+where a bound lives: a recognizer that lets through an input its consumers
+cannot agree on has moved the decision into each caller.</p>
+<p><strong>A varint count used as an index.</strong> <code>binary.Uvarint</code> returns a NEGATIVE count
+for an encoding that overflows sixty-four bits, and the line after one of these
+is usually <code>buf[n:]</code>, which panics rather than erring. Twelve bytes of
+continuation bits, carried in a peer's ink operation, gave
+<code>slice bounds out of range [-11:]</code> with one check deleted. The case is pinned,
+and so is the class: every <code>binary.Uvarint</code> and <code>binary.Varint</code> in non-test
+source must be followed by an <code>if</code> testing its count — twenty of them, checked
+by a test that walks the syntax tree.</p>
+<p><strong>Off that did not mean off.</strong> <code>CollectEvery</code> is off by default, and collecting
+drops map tombstones. One line holds it, no test could see that line — every
+test that collects sets the interval, and the helper written so a test need not
+wait for a timer sets the interval ITSELF — and with the line deleted a server
+with collection off gave back thirty versions' worth of tombstones.</p>
+<h2 id="and-the-fifty-seven-that-were-not">And the fifty-seven that were not<a class="headerlink" href="#and-the-fifty-seven-that-were-not" title="Permanent link">&para;</a></h2>
+<p>Every one was read. They fall into shapes:</p>
 <table>
 <thead>
 <tr>
@@ -876,71 +945,48 @@ manifest saying <em>one gibibyte, no chunks</em> reads as a file:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>Size</code></td>
-<td>1 073 741 824, and says so is true</td>
+<td>a varint count that will not decode, refused again below</td>
+<td>12</td>
 </tr>
 <tr>
-<td><code>Missing</code></td>
-<td>0 — there are no keys, so none are missing</td>
+<td>an error from a call whose next sibling fails the same way</td>
+<td>11</td>
 </tr>
 <tr>
-<td><code>Get</code></td>
-<td>nothing, and not ok</td>
-</tr>
-</tbody>
-</table>
-<p>A gibibyte that nothing is waiting for and that never arrives, which is worse
-than an error because there is nothing to retry and nothing to report.</p>
-<p>The twenty-three that survived and were not real are worth naming rather than
-carrying as a worry. Counted by why each one survives:</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>a bound doubled one layer down</td>
-<td>13</td>
+<td>an empty input or collection</td>
+<td>8</td>
 </tr>
 <tr>
-<td>a fast path — "no character here is more than one UTF-16 code unit, so the offset is the offset"</td>
+<td>a decode that did not succeed, refused again below</td>
+<td>8</td>
+</tr>
+<tr>
+<td>a fast path — the general path gives the same answer</td>
 <td>6</td>
 </tr>
 <tr>
-<td>only saves work: an empty batch not sent, a file not rewritten when nothing changed, one more <code>Recv</code> that returns the same error</td>
-<td>3</td>
-</tr>
-<tr>
-<td>the same value by another line: <code>append([]byte(nil))</code> of nothing is nil too</td>
-<td>1</td>
+<td>read one by one: three save work, seven are doubled, one is a short-circuit, one is an ordering rule deterministic either way</td>
+<td>12</td>
 </tr>
 </tbody>
 </table>
-<p>The thirteen are what defence in depth looks like from a single-layer mutation: a
-kind check in a decoder whose own last line validates the operation anyway, a
-negative length refused again by the range check below it, a snapshot bound
-standing in front of the accounting that every promised operation appears
-exactly once, a lookup before a slow load that a second lookup under the lock
-repeats afterwards.</p>
-<p>Three of those were measured rather than argued: the same <code>ErrOutOfRange</code>
-either way for four negative lengths; all 102 truncations of a real snapshot
-refused with a column's empty-check and without it; and 27.7 million fuzz
-executions against one mutant finding nothing, because that fuzz target asks
-whether a load panics and not whether it accepted what it should have refused.</p>
+<p>The large families are what defence in depth looks like from a single-layer
+mutation, and three of the readings were measured rather than argued: the same
+<code>ErrOutOfRange</code> either way for four negative lengths; all 102 truncations of a
+real snapshot refused with a column's empty-check and without it; and
+<code>RichText.MarksAt</code> returning no marks for −1, past the end and 2²⁰ with its
+bound removed, because what it calls is bounded itself.</p>
 <p>The proportion is not a surprise. At Google, over almost seventeen million
 mutants, developers initially judged 85% of what was reported to them
-unproductive, and rules for suppressing those are what made the technique
-usable at all (Petrović &amp; Ivanković, <em>Practical Mutation Testing at Scale: A
-View From Google</em>, IEEE TSE, 2021). Here the filtering is a reading of each
-survivor, which is affordable because there are twenty-seven of them.</p>
-<p>One caution, learned the hard way the same evening: a <strong>duration</strong> taken during
-a campaign measures the campaign. One mutant appeared to leave the suite four
-times slower, which read as tests waiting on deadlines; measured afterwards in
-pairs it was 0.86x and 0.98x, and the four-fold was a loaded machine. The
-verdict — survived or killed — does not care how loaded the machine is.</p>
+unproductive, and rules for suppressing those are what made the technique usable
+at all (Petrović &amp; Ivanković, <em>Practical Mutation Testing at Scale: A View From
+Google</em>, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
+which is affordable because there are sixty-six of them.</p>
+<p>One caution, learned the hard way: a <strong>duration</strong> taken during a campaign
+measures the campaign. One mutant appeared to leave the suite four times slower,
+which read as tests waiting on deadlines; measured afterwards in pairs it was
+0.86x and 0.98x, and the four-fold was a loaded machine. The verdict — survived
+or killed — does not care how loaded the machine is.</p>
 <h2 id="hostile-input-is-assumed">Hostile input is assumed<a class="headerlink" href="#hostile-input-is-assumed" title="Permanent link">&para;</a></h2>
 <p>Everything a replica receives comes off a network, so every decoder is a trust
 boundary and every decoder is fuzzed. This found <strong>five</strong> states a snapshot could
