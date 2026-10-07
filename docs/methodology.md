@@ -48,88 +48,95 @@ user — whoever had seen more of the document when they typed is placed first,
 rather than whoever happens to hold the smaller identifier. A test was written to
 pin exactly that, and it fails without the clock.
 
-### Systematically, over every refusal
+## Deleting every refusal, not the ones somebody thought to try
 
 Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
-mechanically instead, over every refusal in the files that read bytes somebody
+mechanically instead, over every refusal in the code that reads bytes somebody
 else wrote: walk the source for an `if` whose body returns a refusal, delete
-one, build, run the suite, restore, repeat.
+one, build, run the suite, restore, repeat. Five runs, finished 2026-10-07:
 
-| | `collab` | `crdt` | `crdt/structured` |
-| --- | --- | --- | --- |
-| refusals and bounds taken as subjects | 126 | 104 | 38 |
-| deletions that did not compile — **not mutants** | 73 | 29 | 19 |
-| caught by the suite | 43 | 63 | 14 |
-| survived, at 100% of statements | 10 | 12 | 5 |
-| of those, **real** | **3** | 0 | **1** |
+| | subjects | not mutants | caught | survived | **real** |
+| --- | --- | --- | --- | --- | --- |
+| `collab`, the wire | 126 | 73 | 43 | 10 | **3** |
+| `crdt`, operations and snapshots | 104 | 29 | 63 | 12 | 0 |
+| `crdt/structured`, the decoders | 38 | 19 | 14 | 5 | **1** |
+| `crdt/structured`, the rest | 242 | 101 | 108 | 33 | **4** |
+| `collab`, the stores | 64 | 20 | 38 | 6 | **1** |
+| | **574** | **242** | **266** | **66** | **9** |
 
-**268 subjects, 121 of them not mutants, 120 caught, 27 survivors, 4 real.**
-The three files on the right are the ones that decode a blob manifest, a cell
-and a record — `structured`'s trust boundary — and were run on 2026-10-06.
+The second column is not a result about the tests. Deleting
+`if err != nil { return err }` orphans the `err` the line above declared and the
+package stops building; a run that counts those as killed, or as survived, is
+wrong either way, so they are a third verdict and nearly half of everything
+tried.
 
-The first row of numbers is not a result about the tests. Deleting
-`if err != nil { return err }` orphans the `err` the line above declared and
-the package stops building; a run that counts those as killed, or as survived,
-is wrong either way, so they are a third verdict.
+## The nine
 
-Three of the four were the same mistake three times: **a test asserting that
-an error happened**, where the code after the deleted guard also fails and says
-something else. The clearest is a client that hangs up before sending anything,
-which was handed `InvalidArgument` and "a session must open with a join" — for
-something it never did — where its own stream's `EOF` is the truth. All three
-are pinned now, each by naming the error its case is about rather than its
-existence.
+Four of them are one mistake: **a test asserting that an error happened**, where
+the code after the deleted guard also fails and says something else. The
+clearest is a client that hangs up before sending anything, which was handed
+`InvalidArgument` and "a session must open with a join" — for something it never
+did — where its own stream's `EOF` is the truth.
 
-The fourth is a different shape, and the reason it is worth reading twice: what
-it protects is an **answer**, not an allocation. `decodeManifest` refuses a blob
-manifest whose byte count and chunk count disagree — "a file of no bytes has no
-chunks, and a file of some bytes has some". With that line deleted, a ten-byte
-manifest saying *one gibibyte, no chunks* reads as a file:
+The other five are each their own shape, and three are worth stating plainly.
+
+**A manifest that claims bytes it has no chunks for.** Ten bytes saying *one
+gibibyte, no chunks* read as a file: `Size` reports a gibibyte and says that is
+true, `Missing` reports nothing missing because there are no keys to miss, and
+`Get` hands back nothing. A gibibyte that nothing waits for and that never
+arrives. The shape has a name — Sassaman, Patterson, Bratus, Locasto and
+Shubina call it a *parse tree differential* (Dartmouth TR2011-709, 2011), two
+readers taking different meanings from one input — and it is the argument for
+where a bound lives: a recognizer that lets through an input its consumers
+cannot agree on has moved the decision into each caller.
+
+**A varint count used as an index.** `binary.Uvarint` returns a NEGATIVE count
+for an encoding that overflows sixty-four bits, and the line after one of these
+is usually `buf[n:]`, which panics rather than erring. Twelve bytes of
+continuation bits, carried in a peer's ink operation, gave
+`slice bounds out of range [-11:]` with one check deleted. The case is pinned,
+and so is the class: every `binary.Uvarint` and `binary.Varint` in non-test
+source must be followed by an `if` testing its count — twenty of them, checked
+by a test that walks the syntax tree.
+
+**Off that did not mean off.** `CollectEvery` is off by default, and collecting
+drops map tombstones. One line holds it, no test could see that line — every
+test that collects sets the interval, and the helper written so a test need not
+wait for a timer sets the interval ITSELF — and with the line deleted a server
+with collection off gave back thirty versions' worth of tombstones.
+
+## And the fifty-seven that were not
+
+Every one was read. They fall into shapes:
 
 | | |
 | --- | --- |
-| `Size` | 1 073 741 824, and says so is true |
-| `Missing` | 0 — there are no keys, so none are missing |
-| `Get` | nothing, and not ok |
+| a varint count that will not decode, refused again below | 12 |
+| an error from a call whose next sibling fails the same way | 11 |
+| an empty input or collection | 8 |
+| a decode that did not succeed, refused again below | 8 |
+| a fast path — the general path gives the same answer | 6 |
+| read one by one: three save work, seven are doubled, one is a short-circuit, one is an ordering rule deterministic either way | 12 |
 
-A gibibyte that nothing is waiting for and that never arrives, which is worse
-than an error because there is nothing to retry and nothing to report.
-
-The twenty-three that survived and were not real are worth naming rather than
-carrying as a worry. Counted by why each one survives:
-
-| | |
-| --- | --- |
-| a bound doubled one layer down | 13 |
-| a fast path — "no character here is more than one UTF-16 code unit, so the offset is the offset" | 6 |
-| only saves work: an empty batch not sent, a file not rewritten when nothing changed, one more `Recv` that returns the same error | 3 |
-| the same value by another line: `append([]byte(nil))` of nothing is nil too | 1 |
-
-The thirteen are what defence in depth looks like from a single-layer mutation: a
-kind check in a decoder whose own last line validates the operation anyway, a
-negative length refused again by the range check below it, a snapshot bound
-standing in front of the accounting that every promised operation appears
-exactly once, a lookup before a slow load that a second lookup under the lock
-repeats afterwards.
-
-Three of those were measured rather than argued: the same `ErrOutOfRange`
-either way for four negative lengths; all 102 truncations of a real snapshot
-refused with a column's empty-check and without it; and 27.7 million fuzz
-executions against one mutant finding nothing, because that fuzz target asks
-whether a load panics and not whether it accepted what it should have refused.
+The large families are what defence in depth looks like from a single-layer
+mutation, and three of the readings were measured rather than argued: the same
+`ErrOutOfRange` either way for four negative lengths; all 102 truncations of a
+real snapshot refused with a column's empty-check and without it; and
+`RichText.MarksAt` returning no marks for −1, past the end and 2²⁰ with its
+bound removed, because what it calls is bounded itself.
 
 The proportion is not a surprise. At Google, over almost seventeen million
 mutants, developers initially judged 85% of what was reported to them
-unproductive, and rules for suppressing those are what made the technique
-usable at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A
-View From Google*, IEEE TSE, 2021). Here the filtering is a reading of each
-survivor, which is affordable because there are twenty-seven of them.
+unproductive, and rules for suppressing those are what made the technique usable
+at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A View From
+Google*, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
+which is affordable because there are sixty-six of them.
 
-One caution, learned the hard way the same evening: a **duration** taken during
-a campaign measures the campaign. One mutant appeared to leave the suite four
-times slower, which read as tests waiting on deadlines; measured afterwards in
-pairs it was 0.86x and 0.98x, and the four-fold was a loaded machine. The
-verdict — survived or killed — does not care how loaded the machine is.
+One caution, learned the hard way: a **duration** taken during a campaign
+measures the campaign. One mutant appeared to leave the suite four times slower,
+which read as tests waiting on deadlines; measured afterwards in pairs it was
+0.86x and 0.98x, and the four-fold was a loaded machine. The verdict — survived
+or killed — does not care how loaded the machine is.
 
 ## Hostile input is assumed
 
