@@ -837,7 +837,15 @@ pin exactly that, and it fails without the clock.</p>
 <p>Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
 mechanically instead, over every refusal in the code that reads bytes somebody
 else wrote: walk the source for an <code>if</code> whose body returns a refusal, delete
-one, build, run the suite, restore, repeat. Five runs, finished 2026-10-07:</p>
+one, build, run the suite, restore, repeat.</p>
+<p>It is a tool rather than a description, so the table below can be checked
+rather than believed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>go<span class="w"> </span>install<span class="w"> </span>github.com/go-fleettools/mutate@latest<span class="w">          </span><span class="c1"># one mutation</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>go<span class="w"> </span>install<span class="w"> </span>github.com/go-fleettools/mutate/mutsweep@latest<span class="w"> </span><span class="c1"># every refusal in a package</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>mutsweep<span class="w"> </span>-dir<span class="w"> </span>.<span class="w"> </span>-files<span class="w"> </span>op.go,snapshot.go,utf16.go<span class="w"> </span>--<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./...
+</code></pre></div>
+<p>Five runs, finished 2026-10-07:</p>
 <table>
 <thead>
 <tr>
@@ -905,6 +913,13 @@ one, build, run the suite, restore, repeat. Five runs, finished 2026-10-07:</p>
 package stops building; a run that counts those as killed, or as survived, is
 wrong either way, so they are a third verdict and nearly half of everything
 tried.</p>
+<p>There is a fourth, which these five runs did not need and a later one did: a
+mutant can <strong>hang</strong> rather than fail. Deleting the check that a retry policy is
+honourable does not make a suite red, it makes it wait out an hour somebody
+mistyped into the wrong field — the guard is load-bearing <em>and</em> nothing says so.
+Four of the five verdicts are PIT's under other names (<em>Killed</em>, <em>Survived</em>,
+<em>Timed Out</em>, <em>Non viable</em>, <em>Run error</em>), which is some evidence they are the
+joints of the thing rather than one tool's habits.</p>
 <h2 id="the-nine">The nine<a class="headerlink" href="#the-nine" title="Permanent link">&para;</a></h2>
 <p>Four of them are one mistake: <strong>a test asserting that an error happened</strong>, where
 the code after the deleted guard also fails and says something else. The
