@@ -53,7 +53,19 @@ pin exactly that, and it fails without the clock.
 Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
 mechanically instead, over every refusal in the code that reads bytes somebody
 else wrote: walk the source for an `if` whose body returns a refusal, delete
-one, build, run the suite, restore, repeat. Five runs, finished 2026-10-07:
+one, build, run the suite, restore, repeat.
+
+It is a tool rather than a description, so the table below can be checked
+rather than believed:
+
+```sh
+go install github.com/go-fleettools/mutate@latest          # one mutation
+go install github.com/go-fleettools/mutate/mutsweep@latest # every refusal in a package
+
+mutsweep -dir . -files op.go,snapshot.go,utf16.go -- go test ./...
+```
+
+Five runs, finished 2026-10-07:
 
 | | subjects | not mutants | caught | survived | **real** |
 | --- | --- | --- | --- | --- | --- |
@@ -69,6 +81,14 @@ The second column is not a result about the tests. Deleting
 package stops building; a run that counts those as killed, or as survived, is
 wrong either way, so they are a third verdict and nearly half of everything
 tried.
+
+There is a fourth, which these five runs did not need and a later one did: a
+mutant can **hang** rather than fail. Deleting the check that a retry policy is
+honourable does not make a suite red, it makes it wait out an hour somebody
+mistyped into the wrong field — the guard is load-bearing *and* nothing says so.
+Four of the five verdicts are PIT's under other names (*Killed*, *Survived*,
+*Timed Out*, *Non viable*, *Run error*), which is some evidence they are the
+joints of the thing rather than one tool's habits.
 
 ## The nine
 
