@@ -65,16 +65,17 @@ go install github.com/go-fleettools/mutate/mutsweep@latest # every refusal in a 
 mutsweep -dir . -files op.go,snapshot.go,utf16.go -- go test ./...
 ```
 
-Five runs, finished 2026-10-07:
+Six runs, the last finished 2026-10-08:
 
-| | subjects | not mutants | caught | survived | **real** |
+| | subjects | not mutants | caught | survived | **held** |
 | --- | --- | --- | --- | --- | --- |
 | `collab`, the wire | 126 | 73 | 43 | 10 | **3** |
 | `crdt`, operations and snapshots | 104 | 29 | 63 | 12 | 0 |
 | `crdt/structured`, the decoders | 38 | 19 | 14 | 5 | **1** |
 | `crdt/structured`, the rest | 242 | 101 | 108 | 33 | **4** |
 | `collab`, the stores | 64 | 20 | 38 | 6 | **1** |
-| | **574** | **242** | **266** | **66** | **9** |
+| `crdt`, the core data structures | 204 | 61 | 115 | 27 *(+1 hung)* | **13** |
+| | **778** | **303** | **381** | **93** *(+1)* | **22** |
 
 The second column is not a result about the tests. Deleting
 `if err != nil { return err }` orphans the `err` the line above declared and the
@@ -82,7 +83,7 @@ package stops building; a run that counts those as killed, or as survived, is
 wrong either way, so they are a third verdict and nearly half of everything
 tried.
 
-There is a fourth, which these five runs did not need and a later one did: a
+There is a fourth, which the first five runs did not need and the sixth did: a
 mutant can **hang** rather than fail. Deleting the check that a retry policy is
 honourable does not make a suite red, it makes it wait out an hour somebody
 mistyped into the wrong field — the guard is load-bearing *and* nothing says so.
@@ -90,7 +91,7 @@ Four of the five verdicts are PIT's under other names (*Killed*, *Survived*,
 *Timed Out*, *Non viable*, *Run error*), which is some evidence they are the
 joints of the thing rather than one tool's habits.
 
-## The nine
+## The nine, from the first five runs
 
 Four of them are one mistake: **a test asserting that an error happened**, where
 the code after the deleted guard also fails and says something else. The
@@ -125,7 +126,7 @@ test that collects sets the interval, and the helper written so a test need not
 wait for a timer sets the interval ITSELF — and with the line deleted a server
 with collection off gave back thirty versions' worth of tombstones.
 
-## And the fifty-seven that were not
+## And the fifty-seven of those that were not
 
 Every one was read. They fall into shapes:
 
@@ -150,7 +151,88 @@ mutants, developers initially judged 85% of what was reported to them
 unproductive, and rules for suppressing those are what made the technique usable
 at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A View From
 Google*, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
-which is affordable because there are sixty-six of them.
+which is affordable because there are ninety-three of them.
+
+## The sixth run, where half the survivors were real
+
+The first five runs swept the wire, the stores and the structured layer, and
+yielded nine. The sixth swept what everything else is built on — the composite,
+the list, the map, the text and the version vector — and yielded thirteen from
+twenty-seven survivors. The jump is not a change of method. It is what those
+files are: every one of them reads bytes a peer wrote, and a count read from a
+peer is a claim rather than a fact.
+
+The shape that produced most of them is the one no assertion about a **result**
+can reach. These are the same answer either way:
+
+```go
+nSites, ok := r.uvarint()
+if !ok || nSites > uint64(len(r.buf)) {   // delete this
+    return ErrMalformed                   // and the loop below still returns it
+}
+sites := make([]SiteID, 0, nSites)        // having sized itself from the claim
+```
+
+The loop underneath runs out of bytes and refuses the input exactly as before.
+What changes is only the allocation, so the assertion has to be about the
+allocation — and the numbers are why it is worth making:
+
+| input | claims | allocated with the bound gone |
+| --- | --- | --- |
+| 4 bytes | 16 777 216 sites | 134 217 728 bytes |
+| 6 bytes | 16 777 216 parts | **1 343 536 056 bytes** |
+| 10 bytes | 16 777 216 entries | 605 296 040 bytes |
+| 4 bytes | 16 777 216 vector entries | 605 306 728 bytes |
+
+Six bytes for 1.3 GB is an amplification of two hundred million, and a version
+vector is the first thing a peer sends. The bounds were already right; nothing
+would have noticed if they left.
+
+The run also produced the fourth verdict for the first time. Deleting the line
+that decides whether `Map.wake` walks what is **parked** or walks the **range an
+operation claims** does not fail the suite — a superseded run may name any
+sequence number up to 2⁶², so the suite simply waits, and the sweep gave up after
+four minutes. The test that now holds it gives the call thirty seconds, which is
+a damage bound rather than a performance claim: it returns in microseconds or
+walks 2⁶² numbers, and nothing lands in between.
+
+Two more were about *which* error a peer is told. An operation whose kind this
+build does not know is `ErrInvalidOp` — a dialect — and with the check deleted a
+short one becomes `ErrMalformed`, a damaged transport. A batch truncated in its
+part name is `ErrMalformed`, and with its check deleted becomes `ErrInvalidPart`.
+One says send this again; the other says do not. They are mapped to different
+gRPC codes, so the distinction leaves the process.
+
+And one was a false accusation rather than a missing refusal. `collides` answers
+"two replicas minted the same identity for different characters", and `admit`
+turns a yes into an error. With its gate deleted a *superseded* run is carried
+into that comparison, where its ID names a character the receiver holds and its
+character field is the zero value no character has — so a peer resending a run it
+no longer holds would be told its identity clashes and lose its session.
+
+Fifteen of the twenty-seven were left unheld on purpose, each with the reason
+written beside it in the test file and measured rather than argued: six are
+mutually covering pairs, five reach the same value by a longer route, and four
+are refused again one layer down. One of those readings needed a second channel
+to settle — a bound of exactly the shape in the table above, which the suite does
+not notice and which turns out to size nothing: 14 bytes claiming 16 777 216
+elements cost 608 bytes of allocation with it and 608 without.
+
+## Answering a report
+
+Writing a test for a survivor leaves a question the test cannot answer about
+itself: is it green because it holds the guard, or green because it never reaches
+it? Re-running the whole sweep to find out costs half an hour, which is why the
+survivors go back through the tool by name:
+
+```sh
+mutsweep -only map.go:163,map.go:628,map.go:856 -- go test -count 1 ./...
+```
+
+A target that matches no refusal is an error naming the target, because the two
+ways such a list goes stale — the file edited since the report, the line mistyped
+— both otherwise end as a sweep of nothing, which is the one result that reads
+like a clean one.
 
 One caution, learned the hard way: a **duration** taken during a campaign
 measures the campaign. One mutant appeared to leave the suite four times slower,
