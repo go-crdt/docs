@@ -188,6 +188,23 @@ Six bytes for 1.3 GB is an amplification of two hundred million, and a version
 vector is the first thing a peer sends. The bounds were already right; nothing
 would have noticed if they left.
 
+The class has a name — MITRE call it *Memory Allocation with Excessive Size
+Value* ([CWE-789](https://cwe.mitre.org/data/definitions/789.html)) — and it is
+not a curiosity of this codebase. On the morning after this sweep finished, Go
+published thirteen standard library advisories, and three of them are the same
+shape:
+
+- *Lack of limit on size of parsed Range headers* in `net/http` (GO-2026-6609);
+- *Memory limit bypass when parsing MIME headers* in `net/textproto` and
+  `mime/multipart` (GO-2026-6608);
+- *HTTP/2 server memory exhaustion due to Trailer headers* in `net/http`
+  (GO-2026-6603).
+
+A size a peer chose, believed far enough to reserve for. That is also why the
+fix here is a bound and not a larger buffer: the recognizer has to refuse the
+claim before anything downstream acts on it, which is the same argument as the
+parse tree differential above, applied to a resource rather than to a meaning.
+
 The run also produced the fourth verdict for the first time. Deleting the line
 that decides whether `Map.wake` walks what is **parked** or walks the **range an
 operation claims** does not fail the suite — a superseded run may name any
