@@ -450,6 +450,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-same-defect-twice-two-files-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The same defect twice, two files apart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#hostile-input-is-assumed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -802,6 +813,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-same-defect-twice-two-files-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The same defect twice, two files apart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#hostile-input-is-assumed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -889,7 +911,7 @@ rather than believed:</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>mutsweep<span class="w"> </span>-dir<span class="w"> </span>.<span class="w"> </span>-files<span class="w"> </span>op.go,snapshot.go,utf16.go<span class="w"> </span>--<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./...
 </code></pre></div>
-<p>Six runs, the last finished 2026-10-08:</p>
+<p>Seven runs, the last finished 2026-10-09:</p>
 <table>
 <thead>
 <tr>
@@ -951,15 +973,29 @@ rather than believed:</p>
 <td><strong>13</strong></td>
 </tr>
 <tr>
+<td><code>crdt</code>, everything else in the root</td>
+<td>32</td>
+<td>6</td>
+<td>20</td>
+<td>6</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
 <td></td>
-<td><strong>778</strong></td>
-<td><strong>303</strong></td>
-<td><strong>381</strong></td>
-<td><strong>93</strong> <em>(+1)</em></td>
-<td><strong>22</strong></td>
+<td><strong>810</strong></td>
+<td><strong>309</strong></td>
+<td><strong>401</strong></td>
+<td><strong>99</strong> <em>(+1)</em></td>
+<td><strong>23</strong></td>
 </tr>
 </tbody>
 </table>
+<p>The last row is there because the first six left a hole worth naming. They were
+each pointed at a set of files, and after six runs nine of the twenty sources in
+<code>crdt</code>'s root had never been in any of them. A campaign total is a number about
+whatever it was pointed at, so the question "what has not been swept?" has to be
+asked of the directory rather than of the total. With that row the root is
+complete.</p>
 <p>The second column is not a result about the tests. Deleting
 <code>if err != nil { return err }</code> orphans the <code>err</code> the line above declared and the
 package stops building; a run that counts those as killed, or as survived, is
@@ -1048,7 +1084,7 @@ mutants, developers initially judged 85% of what was reported to them
 unproductive, and rules for suppressing those are what made the technique usable
 at all (Petrović &amp; Ivanković, <em>Practical Mutation Testing at Scale: A View From
 Google</em>, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
-which is affordable because there are ninety-three of them.</p>
+which is affordable because there are ninety-nine of them.</p>
 <h2 id="the-sixth-run-where-half-the-survivors-were-real">The sixth run, where half the survivors were real<a class="headerlink" href="#the-sixth-run-where-half-the-survivors-were-real" title="Permanent link">&para;</a></h2>
 <p>The first five runs swept the wire, the stores and the structured layer, and
 yielded nine. The sixth swept what everything else is built on — the composite,
@@ -1154,6 +1190,46 @@ survivors go back through the tool by name:</p>
 ways such a list goes stale — the file edited since the report, the line mistyped
 — both otherwise end as a sweep of nothing, which is the one result that reads
 like a clean one.</p>
+<p>The sixth run's twenty-eight were put back through it once the tests had landed,
+against the merged branch: <strong>twelve caught</strong>, which is exactly the twelve the
+tests were written for, and the fifteen named as unheld still survive. A
+prediction confirming itself is worth more than a prediction. The hung one is
+still hung, and that is not a gap in its test — the command a sweep runs is the
+<em>whole</em> suite, and other tests in the package wait it out too; the test written
+for it fails in thirty seconds.</p>
+<h2 id="the-same-defect-twice-two-files-apart">The same defect twice, two files apart<a class="headerlink" href="#the-same-defect-twice-two-files-apart" title="Permanent link">&para;</a></h2>
+<p>The seventh run found, in <code>Map.resurrects</code>, the defect the sixth had found in
+<code>Doc.collides</code>. Both ask something of <strong>every operation that arrives twice</strong>, and
+both were carrying a <em>superseded run</em> — an operation that stands in for what its
+sender no longer holds — into a comparison that has no business reading it.</p>
+<p>A superseded run carries a sequence range and nothing else. Every other field is
+a zero, and a zero looks like a value:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>the comparison</th>
+<th>with the refusal deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Doc.collides</code></td>
+<td>two replicas minted one identity for <strong>different characters</strong></td>
+<td>the run's ID names a character the receiver holds, its character field is the zero no character has → <code>ErrCollidingID</code>, session torn down</td>
+</tr>
+<tr>
+<td><code>Map.resurrects</code></td>
+<td>this write would bring back a key whose tombstone we dropped</td>
+<td>the run names <strong>no</strong> key, <code>records[""]</code> is absent → read as a key not held → <code>ErrStranded</code>, the whole batch refused</td>
+</tr>
+</tbody>
+</table>
+<p>Both times, a peer <strong>resending</strong> a run it no longer holds is accused. Both times
+the refusal that prevented it was held by nothing. A guard of the form
+<code>if op.Kind != X { return false }</code> at the top of a predicate is not a shortcut —
+it is the predicate's <em>scope</em>, and without it the predicate answers about an
+object it knows nothing about by reading zeros.</p>
 <p>One caution, learned the hard way: a <strong>duration</strong> taken during a campaign
 measures the campaign. One mutant appeared to leave the suite four times slower,
 which read as tests waiting on deadlines; measured afterwards in pairs it was
