@@ -65,7 +65,7 @@ go install github.com/go-fleettools/mutate/mutsweep@latest # every refusal in a 
 mutsweep -dir . -files op.go,snapshot.go,utf16.go -- go test ./...
 ```
 
-Six runs, the last finished 2026-10-08:
+Seven runs, the last finished 2026-10-09:
 
 | | subjects | not mutants | caught | survived | **held** |
 | --- | --- | --- | --- | --- | --- |
@@ -75,7 +75,15 @@ Six runs, the last finished 2026-10-08:
 | `crdt/structured`, the rest | 242 | 101 | 108 | 33 | **4** |
 | `collab`, the stores | 64 | 20 | 38 | 6 | **1** |
 | `crdt`, the core data structures | 204 | 61 | 115 | 27 *(+1 hung)* | **13** |
-| | **778** | **303** | **381** | **93** *(+1)* | **22** |
+| `crdt`, everything else in the root | 32 | 6 | 20 | 6 | **1** |
+| | **810** | **309** | **401** | **99** *(+1)* | **23** |
+
+The last row is there because the first six left a hole worth naming. They were
+each pointed at a set of files, and after six runs nine of the twenty sources in
+`crdt`'s root had never been in any of them. A campaign total is a number about
+whatever it was pointed at, so the question "what has not been swept?" has to be
+asked of the directory rather than of the total. With that row the root is
+complete.
 
 The second column is not a result about the tests. Deleting
 `if err != nil { return err }` orphans the `err` the line above declared and the
@@ -151,7 +159,7 @@ mutants, developers initially judged 85% of what was reported to them
 unproductive, and rules for suppressing those are what made the technique usable
 at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A View From
 Google*, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
-which is affordable because there are ninety-three of them.
+which is affordable because there are ninety-nine of them.
 
 ## The sixth run, where half the survivors were real
 
@@ -250,6 +258,35 @@ A target that matches no refusal is an error naming the target, because the two
 ways such a list goes stale — the file edited since the report, the line mistyped
 — both otherwise end as a sweep of nothing, which is the one result that reads
 like a clean one.
+
+The sixth run's twenty-eight were put back through it once the tests had landed,
+against the merged branch: **twelve caught**, which is exactly the twelve the
+tests were written for, and the fifteen named as unheld still survive. A
+prediction confirming itself is worth more than a prediction. The hung one is
+still hung, and that is not a gap in its test — the command a sweep runs is the
+*whole* suite, and other tests in the package wait it out too; the test written
+for it fails in thirty seconds.
+
+## The same defect twice, two files apart
+
+The seventh run found, in `Map.resurrects`, the defect the sixth had found in
+`Doc.collides`. Both ask something of **every operation that arrives twice**, and
+both were carrying a *superseded run* — an operation that stands in for what its
+sender no longer holds — into a comparison that has no business reading it.
+
+A superseded run carries a sequence range and nothing else. Every other field is
+a zero, and a zero looks like a value:
+
+| | the comparison | with the refusal deleted |
+| --- | --- | --- |
+| `Doc.collides` | two replicas minted one identity for **different characters** | the run's ID names a character the receiver holds, its character field is the zero no character has → `ErrCollidingID`, session torn down |
+| `Map.resurrects` | this write would bring back a key whose tombstone we dropped | the run names **no** key, `records[""]` is absent → read as a key not held → `ErrStranded`, the whole batch refused |
+
+Both times, a peer **resending** a run it no longer holds is accused. Both times
+the refusal that prevented it was held by nothing. A guard of the form
+`if op.Kind != X { return false }` at the top of a predicate is not a shortcut —
+it is the predicate's *scope*, and without it the predicate answers about an
+object it knows nothing about by reading zeros.
 
 One caution, learned the hard way: a **duration** taken during a campaign
 measures the campaign. One mutant appeared to leave the suite four times slower,
