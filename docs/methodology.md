@@ -65,7 +65,7 @@ go install github.com/go-fleettools/mutate/mutsweep@latest # every refusal in a 
 mutsweep -dir . -files op.go,snapshot.go,utf16.go -- go test ./...
 ```
 
-Seven runs, the last finished 2026-10-09:
+Eight runs, the last finished 2026-10-11:
 
 | | subjects | not mutants | caught | survived | **held** |
 | --- | --- | --- | --- | --- | --- |
@@ -76,14 +76,38 @@ Seven runs, the last finished 2026-10-09:
 | `collab`, the stores | 64 | 20 | 38 | 6 | **1** |
 | `crdt`, the core data structures | 204 | 61 | 115 | 27 *(+1 hung)* | **13** |
 | `crdt`, everything else in the root | 32 | 6 | 20 | 6 | **1** |
-| | **810** | **309** | **401** | **99** *(+1)* | **23** |
+| `collab`, the browser half | 41 | 13 | 8 | 20 | **10** |
+| | **851** | **322** | **409** | **119** *(+1)* | **33** |
 
-The last row is there because the first six left a hole worth naming. They were
-each pointed at a set of files, and after six runs nine of the twenty sources in
-`crdt`'s root had never been in any of them. A campaign total is a number about
-whatever it was pointed at, so the question "what has not been swept?" has to be
-asked of the directory rather than of the total. With that row the root is
-complete.
+The last two rows are there because the first six left holes, and the holes were
+of two different kinds.
+
+The seventh filled one of **omission**. Each run had been pointed at a set of
+files, and after six of them nine of the twenty sources in `crdt`'s root had
+never been in any. A campaign total is a number about whatever it was pointed
+at, so "what has not been swept?" has to be asked of the **directory** rather
+than of the total.
+
+The eighth filled a hole that could not have been filled by pointing at it. The
+browser half of `collab` — the WebRTC peer, the BroadcastChannel bus, the Web
+Locks election, the browser's WebSocket — is behind `//go:build js && wasm`, and
+a native `go test` does not **compile** it. Sweep those files with a native
+command and every refusal in them comes back `SURVIVED — nothing covers this`,
+when the truth is that nothing *looked*: one deleted by hand reported exactly
+that, after ninety-three seconds of running a suite that never read the file.
+The tool refuses that now, and the sweep was run for real with the platform set
+on both sides of it:
+
+```sh
+GOOS=js GOARCH=wasm mutsweep -files bcast_js.go,bcast_lock_js.go,peer_js.go,webrtc_js.go,websocket_js.go \
+  -- go test -count 1 -exec "$(go env GOROOT)/lib/wasm/go_js_wasm_exec" .
+```
+
+Two minutes, because the js/wasm test set is 74 tests and runs in seconds. It is
+the highest yield of the campaign — **ten of twenty survivors held** — which is
+what an unswept surface looks like rather than a statement about that code.
+What it found is in [the browser half](#the-browser-half-of-a-pure-go-engine)
+below.
 
 The second column is not a result about the tests. Deleting
 `if err != nil { return err }` orphans the `err` the line above declared and the
@@ -159,7 +183,7 @@ mutants, developers initially judged 85% of what was reported to them
 unproductive, and rules for suppressing those are what made the technique usable
 at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A View From
 Google*, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
-which is affordable because there are ninety-nine of them.
+which is affordable because there are a hundred and nineteen of them.
 
 ## The sixth run, where half the survivors were real
 
@@ -287,6 +311,62 @@ the refusal that prevented it was held by nothing. A guard of the form
 `if op.Kind != X { return false }` at the top of a predicate is not a shortcut —
 it is the predicate's *scope*, and without it the predicate answers about an
 object it knows nothing about by reading zeros.
+
+## The browser half of a pure Go engine
+
+The point of writing this in Go is that a tab and a server run the *same* merge
+code. The transports underneath them are not the same: a tab reaches another tab
+over a BroadcastChannel, reaches a peer over WebRTC, reaches a server over the
+browser's own WebSocket, and decides which tab hosts with the Web Locks API.
+That is four browser APIs, and every one of them can be absent.
+
+Ten refusals were held there. Three are a shape this page has already named —
+**a test asserting that *an* error happened**:
+
+- `Peer.Answer`'s role gate. A test for it existed and covered three of the four
+  ways a page can take two roles. Its answering case passed the literal
+  `"anything"`, which is not a connection description, so with the gate deleted
+  `Answer` carried on and the *decoder* refused it instead — and both wrap
+  `ErrTransport`, so neither the test nor `errors.Is` could tell them apart. The
+  replacement hands it a **valid** offer, which leaves the gate as the only thing
+  that can refuse it, and adds the fourth combination: answering twice.
+- The check after `createAnswer`. The fixture could make `createOffer` reject and
+  had nothing for `createAnswer`, so of a symmetric pair the answer half was the
+  one no test could reach. That is why it survived and its twin did not.
+- The check after `dialBus`, which returns `(nil, nil)` without it — a caller told
+  nothing went wrong, holding nothing, with the bus left open, since that branch
+  is also what closes it.
+
+Four are **feature detection**, and they are what an old browser gets instead of a
+stack trace in a console nobody is reading: no `BroadcastChannel` (both doors into
+it), no `WebSocket`, and no data channel. One more is the **Web Locks** detection,
+which is load-bearing in a way worth stating: the lock is the *rule* for deciding
+which tab hosts, and the timing window is the *fallback*, because a lock answers
+immediately and exclusively while a window can leave two tabs hosting on a loaded
+machine. The detection is what chooses between them.
+
+And one is a guard that is **unreachable today and pinned anyway**, because of what
+the measurement says happens without it. `stalled` decorates a transport error with
+the connection's three states; both of its callers pass `ctx.Err()` from inside a
+`case <-ctx.Done()`, so neither can hand it nil. Delete its nil check and
+
+```
+stalled(nil) = %!w(<nil>) (connection new, ice new, gathering new)
+```
+
+a non-nil error built out of a nil one, with a formatting artefact for a message.
+Any future caller that decorated unconditionally would turn every success into a
+failure, and the failure would say nothing about why.
+
+The other ten survivors are named in the test files with the measurement beside
+each: two pairs where the same state is read before and after a listener is wired
+(the second of each carries the behaviour, and its window needs the browser's own
+timing), three "already closed" guards that are cost because `js.Func.Release` and
+a select on a closed channel are both idempotent, one cosmetic (`syscall/js`
+renders a non-string as `<object>` rather than panicking), one reachable only from
+a value nothing constructs, and one still blocked on a fixture — `OpenBroadcastSession`
+*succeeds* on a context that is already over, because a tab alone in a room becomes
+its host immediately and the election never waits for anything.
 
 One caution, learned the hard way: a **duration** taken during a campaign
 measures the campaign. One mutant appeared to leave the suite four times slower,
