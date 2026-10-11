@@ -109,6 +109,25 @@ what an unswept surface looks like rather than a statement about that code.
 What it found is in [the browser half](#the-browser-half-of-a-pure-go-engine)
 below.
 
+This hole has a name outside Go, and it is older than Go. A build tag is a
+*configuration*, and an analysis run in one configuration says nothing about the
+others — which is the whole subject of variability-aware (family-based) analysis,
+against the single-configuration or sampled kind. The scale of it in real code is
+measured: over forty C product lines, variability is not a rare decoration but
+pervasive and fine-grained, often reaching inside single expressions (Liebig,
+Apel, Lengauer, Kästner and Schulze, *An Analysis of the Variability in Forty
+Preprocessor-Based Software Product Lines*, ICSE 2010). And analysing a family
+rather than a configuration is expensive enough to be a research problem of its
+own, on Busybox, the Linux kernel and OpenSSL (Liebig, von Rhein, Kästner, Apel,
+Dörre and Lengauer, *Scalable Analysis of Variable Software*, ESEC/FSE 2013).
+
+Go makes this smaller and sharper than C does — a handful of named tags rather
+than thousands of interacting macros — but not absent, and the sharp part is that
+nothing warns you. A sweep of an excluded file does not fail; it reports a clean
+file. So the rule here is not "be variability-aware", which this campaign is not:
+it is that the *list of configurations swept* is part of the result, and a tool
+that cannot say which one it was in should not be trusted to say a file is held.
+
 The second column is not a result about the tests. Deleting
 `if err != nil { return err }` orphans the `err` the line above declared and the
 package stops building; a run that counts those as killed, or as survived, is
