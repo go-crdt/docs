@@ -65,7 +65,7 @@ go install github.com/go-fleettools/mutate/mutsweep@latest # every refusal in a 
 mutsweep -dir . -files op.go,snapshot.go,utf16.go -- go test ./...
 ```
 
-Eight runs, the last finished 2026-10-11:
+Nine runs, the last finished 2026-10-11:
 
 | | subjects | not mutants | caught | survived | **held** |
 | --- | --- | --- | --- | --- | --- |
@@ -77,16 +77,41 @@ Eight runs, the last finished 2026-10-11:
 | `crdt`, the core data structures | 204 | 61 | 115 | 27 *(+1 hung)* | **13** |
 | `crdt`, everything else in the root | 32 | 6 | 20 | 6 | **1** |
 | `collab`, the browser half | 41 | 13 | 8 | 20 | **10** |
-| | **851** | **322** | **409** | **119** *(+1)* | **33** |
+| `crdt/awareness` | 14 | 2 | 11 | 1 | **1** |
+| | **865** | **324** | **420** | **120** *(+1)* | **34** |
 
-The last two rows are there because the first six left holes, and the holes were
-of two different kinds.
+The last three rows are there because the first six left holes, and the holes
+were not all of one kind. The same gap turned up **four times in three shapes**,
+which is what makes it a fault in the *record* rather than in anybody's
+attention:
 
-The seventh filled one of **omission**. Each run had been pointed at a set of
-files, and after six of them nine of the twenty sources in `crdt`'s root had
-never been in any. A campaign total is a number about whatever it was pointed
-at, so "what has not been swept?" has to be asked of the **directory** rather
-than of the total.
+| shape | what was missing |
+| --- | --- |
+| files left out of a directory that *was* swept | nine of the twenty sources in `crdt`'s root, after **six** runs |
+| files the command does not compile | the five `*_js.go` in `collab` — 41 refusals |
+| a **subpackage** never pointed at | `crdt/awareness`, 14 refusals, no row at all |
+| what is left over, unidentifiable | `collab`'s root holds 245 native refusals against 190 in the rows: **55** whose names the rows cannot give back |
+
+The last line is the one worth dwelling on. Rows that name a *theme* —
+"`collab`, the wire" — cannot say which files they covered, so the 55 can only be
+found by sweeping all 245 again. Naming files costs nothing at the time and is
+the difference between a gap you can see and a gap you cannot.
+
+**And the check costs a second per directory.** `mutsweep -dir X -- true` prints
+its refusal count *before running anything*, so the count can be compared with
+what the rows claim:
+
+```sh
+$ mutsweep -dir . -- true          # crdt's root
+mutsweep: 340 refusals, ...        # 104 + 204 + 32 ✓
+$ mutsweep -dir structured -- true
+mutsweep: 280 refusals, ...        # 38 + 242 ✓
+$ mutsweep -dir awareness -- true
+mutsweep: 14 refusals, ...         # nothing ✗
+```
+
+Which is how the last row was found, and it has to be run for every subpackage
+rather than for the one being worked in.
 
 The eighth filled a hole that could not have been filled by pointing at it. The
 browser half of `collab` — the WebRTC peer, the BroadcastChannel bus, the Web
@@ -202,7 +227,7 @@ mutants, developers initially judged 85% of what was reported to them
 unproductive, and rules for suppressing those are what made the technique usable
 at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A View From
 Google*, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
-which is affordable because there are a hundred and nineteen of them.
+which is affordable because there are a hundred and twenty of them.
 
 ## The sixth run, where half the survivors were real
 
@@ -386,6 +411,39 @@ renders a non-string as `<object>` rather than panicking), one reachable only fr
 a value nothing constructs, and one still blocked on a fixture — `OpenBroadcastSession`
 *succeeds* on a context that is already over, because a tab alone in a room becomes
 its host immediately and the election never waits for anything.
+
+## One clause of four, in a package nobody had pointed at
+
+`crdt/awareness` carries presence — who is here, where their cursor is — which is
+the busiest thing on this wire, and its fourteen refusals had been in no run. One
+survived:
+
+```go
+site, ok1 := d.uvarint()
+clock, ok2 := d.uvarint()
+gone, ok3 := d.byteValue()
+if !ok1 || !ok2 || !ok3 || gone > 1 {   // ← deleted
+    return ErrMalformed
+}
+out := Update{..., Gone: gone == 1}
+```
+
+What the `gone > 1` clause keeps is the encoding being **canonical** — the same
+state being the same bytes — which is what lets snapshots here be compared by
+their bytes, and which every other decoder in `crdt` insists on. Without it,
+`gone == 1` reads 2, 7 and 255 all as *false*, so one present participant can be
+written **255 different ways**. Measured on a real update:
+
+| gone byte | with the clause | without it |
+| --- | --- | --- |
+| 0 | accepted, re-encodes to the same bytes | same |
+| 2, 7, 255 | refused | accepted, re-encodes to **different** bytes |
+
+Which of the four clauses carries it was measured too, because that line is four
+decisions in one: dropping only `gone > 1` turns the new test red, and dropping
+only the three `!okN` checks leaves the whole suite green — a site, a clock or a
+byte that did not decode leaves a buffer the next read runs out of. The clause
+about what the byte *means* is the one nothing else says.
 
 One caution, learned the hard way: a **duration** taken during a campaign
 measures the campaign. One mutant appeared to leave the suite four times slower,
