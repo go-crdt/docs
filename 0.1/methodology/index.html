@@ -417,6 +417,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#collabs-root-finished-and-named-2026-10-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        collab's root, finished and named — 2026-10-18
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -819,6 +830,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#collabs-root-finished-and-named-2026-10-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        collab's root, finished and named — 2026-10-18
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1170,6 +1192,127 @@ statements being the example given — and surfaces the survivors as findings in
 review. A diff-shaped campaign never has to be chunked, so it never has to be
 accounted for. A whole-package campaign does, and that accounting is the part no
 instrument here was doing.</p>
+<h3 id="collabs-root-finished-and-named-2026-10-18"><code>collab</code>'s root, finished and named — 2026-10-18<a class="headerlink" href="#collabs-root-finished-and-named-2026-10-18" title="Permanent link">&para;</a></h3>
+<p>Five chunks, every file named, and the total compared with the package rather
+than with itself:</p>
+<table>
+<thead>
+<tr>
+<th>chunk</th>
+<th>files</th>
+<th>subjects</th>
+<th>not mutants</th>
+<th>caught</th>
+<th>survived</th>
+<th><strong>held</strong></th>
+<th>named</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>wire.go</code>, <code>server.go</code></td>
+<td>55</td>
+<td>24</td>
+<td>27</td>
+<td>4</td>
+<td><strong>2</strong></td>
+<td>2</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>follow.go</code>, <code>sites.go</code>, <code>rejoin.go</code>, <code>grpc.go</code>, <code>stable.go</code>, <code>multistore.go</code></td>
+<td>61</td>
+<td>28</td>
+<td>30</td>
+<td>3</td>
+<td><strong>1</strong></td>
+<td>2</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>reconnect.go</code>, <code>parts.go</code>, <code>tiered.go</code>, <code>serve_websocket.go</code>, <code>websocket.go</code>, <code>store.go</code></td>
+<td>32</td>
+<td>22</td>
+<td>7</td>
+<td>3</td>
+<td><strong>3</strong></td>
+<td>0</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>client.go</code>, <code>capability.go</code>, <code>bcast.go</code>, <code>authorize.go</code>, <code>backoff.go</code></td>
+<td>58</td>
+<td>30</td>
+<td>22</td>
+<td>6</td>
+<td><strong>3</strong></td>
+<td>3</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>dirstore.go</code>, <code>dircompress.go</code>, <code>durability.go</code></td>
+<td>39</td>
+<td>11</td>
+<td>25</td>
+<td>3</td>
+<td><strong>2</strong></td>
+<td>1</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><strong>245</strong></td>
+<td><strong>115</strong></td>
+<td><strong>111</strong></td>
+<td><strong>19</strong></td>
+<td><strong>11</strong></td>
+<td><strong>8</strong></td>
+</tr>
+</tbody>
+</table>
+<p>245 is <code>mutsweep -dir . -tally</code>'s answer for the package, not the sum of the
+rows — the two agree, which is the whole point of the section above. The five
+<code>*_js.go</code> files are not in it: the darwin build excludes them, the tool says so
+by name, and they are the 41 of the browser-half row further down.</p>
+<p>⛔ <strong>This is not additive to the 865.</strong> It re-sweeps ground the "collab, the
+wire" and "collab, the stores" rows covered under theme names, and that is why
+it exists: those rows could not say which files they had read.</p>
+<p>Three of the eleven are worth naming here, because each one looked like
+something cheaper than it was:</p>
+<table>
+<thead>
+<tr>
+<th>guard</th>
+<th>what it looked like</th>
+<th>what deleting it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bcast.go:186</code>, <code>if n &lt;= 0</code></td>
+<td>a check for a truncated header</td>
+<td><strong>panics</strong>. <code>binary.Uvarint</code> returns a <em>negative</em> count for an overflowing varint, and <code>rest[n:]</code> is then <code>slice bounds out of range [-11:]</code>. On the BroadcastChannel bus, so the bytes come from another <strong>tab</strong></td>
+</tr>
+<tr>
+<td><code>dirstore.go:322</code>, the unpack error in <code>Release</code></td>
+<td>a lost error message</td>
+<td>the error becomes <code>ErrChanged</code>, the one <code>Tiered.Archive</code> treats as <strong>benign</strong> — so a corrupt file is skipped in silence by the only code that knew</td>
+</tr>
+<tr>
+<td><code>client.go:518</code>, <code>publish</code>'s empty batch list</td>
+<td>an empty frame nobody minds</td>
+<td><strong>every join</strong> pays a whole snapshot write: <code>pushMissing</code> calls it with what a fresh participant has, which its own comment says is nothing</td>
+</tr>
+</tbody>
+</table>
+<p>And the eight named-not-pinned were each <em>measured</em> rather than argued, because
+two of them had been read wrong first. <code>client.go:285</code>'s fast path would have
+been load-bearing if <code>LoadComposite</code> answered <code>ErrUnknownFormat</code> for an empty
+snapshot — it answers <code>malformed encoding</code>, so the guard is equivalent.
+<code>stable.go:263</code> was first read as a floor of "nothing" returned as a floor that
+exists, which would have let a collection run below what anybody acknowledged;
+the function's last guard already returns the same <code>(nil, false)</code>.</p>
 <p>The eighth filled a hole that could not have been filled by pointing at it. The
 browser half of <code>collab</code> — the WebRTC peer, the BroadcastChannel bus, the Web
 Locks election, the browser's WebSocket — is behind <code>//go:build js &amp;&amp; wasm</code>, and
