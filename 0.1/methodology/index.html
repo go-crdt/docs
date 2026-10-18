@@ -403,6 +403,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Deleting every refusal, not the ones somebody thought to try">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-same-check-not-run-and-what-came-of-that" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The same check, not run — and what came of that
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -788,6 +805,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Deleting every refusal, not the ones somebody thought to try">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-same-check-not-run-and-what-came-of-that" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The same check, not run — and what came of that
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1096,6 +1130,46 @@ what the rows claim:</p>
 </code></pre></div>
 <p>Which is how the last row was found, and it has to be run for every subpackage
 rather than for the one being worked in.</p>
+<h3 id="the-same-check-not-run-and-what-came-of-that">The same check, not run — and what came of that<a class="headerlink" href="#the-same-check-not-run-and-what-came-of-that" title="Permanent link">&para;</a></h3>
+<p>Six days later the 55 unnamed refusals were gone after for real: <code>collab</code>'s root
+was re-swept <strong>by name</strong>, in three chunks of 55, 61 and 32, and the result was
+published as</p>
+<blockquote>
+<p>That closes the root package: 148 refusals over three chunks.</p>
+</blockquote>
+<p>The package holds <strong>245</strong>. Ninety-seven refusals in eight files had been in no
+chunk at all — <code>dirstore.go</code> 25, <code>client.go</code> 21, <code>bcast.go</code> 16, <code>capability.go</code>
+12, <code>dircompress.go</code> 8, <code>authorize.go</code> 7, <code>durability.go</code> 6, <code>backoff.go</code> 2.</p>
+<p>The check above is exactly the one that catches it, it is written on this page
+three paragraphs up, and it was not run. Nothing in the act of adding three
+numbers together asks the package anything, and a Σ of chunks looks like a
+measurement — it has units and a total and it is reproducible. It is not one.</p>
+<p><strong>So the check became a flag, printing what a plan is made of.</strong> <code>mutsweep
+-tally</code> (v0.6.0) answers <em>which file</em>, not merely <em>how many</em>, runs nothing, and
+needs no command:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gp">$ </span>mutsweep<span class="w"> </span>-dir<span class="w"> </span>.<span class="w"> </span>-tally
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="go">mutsweep: not swept, the darwin/arm64 build excludes them: bcast_js.go, ...</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="go">245 refusals in 22 file(s) of .</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="go">     31  wire.go</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="go">     25  dirstore.go</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="go">     24  server.go</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="go">     21  client.go</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="go">     17  follow.go</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="go">     ...</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="go">      2  backoff.go</span>
+</code></pre></div>
+<p>With <code>-files</code> it counts what a chunk <em>will</em> sweep, so the comparison is made
+before the hour is spent instead of after the claim is published. The point is
+not the convenience: a check that answers a question <strong>next to</strong> the one being
+asked — "how many" when the sentence says "which" — does not protect anybody,
+and this page is the evidence.</p>
+<p>This is where the shape of the campaign matters. The Google system cited further
+down this page mutates <strong>one node per line</strong> of a code review's <strong>diff</strong>, after
+excluding what it calls <em>arid</em> nodes — code whose mutants are unproductive, log
+statements being the example given — and surfaces the survivors as findings in
+review. A diff-shaped campaign never has to be chunked, so it never has to be
+accounted for. A whole-package campaign does, and that accounting is the part no
+instrument here was doing.</p>
 <p>The eighth filled a hole that could not have been filled by pointing at it. The
 browser half of <code>collab</code> — the WebRTC peer, the BroadcastChannel bus, the Web
 Locks election, the browser's WebSocket — is behind <code>//go:build js &amp;&amp; wasm</code>, and
@@ -1105,8 +1179,8 @@ when the truth is that nothing <em>looked</em>: one deleted by hand reported exa
 that, after ninety-three seconds of running a suite that never read the file.
 The tool refuses that now, and the sweep was run for real with the platform set
 on both sides of it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">GOOS</span><span class="o">=</span>js<span class="w"> </span><span class="nv">GOARCH</span><span class="o">=</span>wasm<span class="w"> </span>mutsweep<span class="w"> </span>-files<span class="w"> </span>bcast_js.go,bcast_lock_js.go,peer_js.go,webrtc_js.go,websocket_js.go<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-count<span class="w"> </span><span class="m">1</span><span class="w"> </span>-exec<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>go<span class="w"> </span>env<span class="w"> </span>GOROOT<span class="k">)</span><span class="s2">/lib/wasm/go_js_wasm_exec"</span><span class="w"> </span>.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">GOOS</span><span class="o">=</span>js<span class="w"> </span><span class="nv">GOARCH</span><span class="o">=</span>wasm<span class="w"> </span>mutsweep<span class="w"> </span>-files<span class="w"> </span>bcast_js.go,bcast_lock_js.go,peer_js.go,webrtc_js.go,websocket_js.go<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-count<span class="w"> </span><span class="m">1</span><span class="w"> </span>-exec<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>go<span class="w"> </span>env<span class="w"> </span>GOROOT<span class="k">)</span><span class="s2">/lib/wasm/go_js_wasm_exec"</span><span class="w"> </span>.
 </code></pre></div>
 <p>Two minutes, because the js/wasm test set is 74 tests and runs in seconds. It is
 the highest yield of the campaign — <strong>ten of twenty survivors held</strong> — which is
@@ -1228,11 +1302,11 @@ files are: every one of them reads bytes a peer wrote, and a count read from a
 peer is a claim rather than a fact.</p>
 <p>The shape that produced most of them is the one no assertion about a <strong>result</strong>
 can reach. These are the same answer either way:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nx">nSites</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">uvarint</span><span class="p">()</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="nx">ok</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">nSites</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="kt">uint64</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">buf</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="c1">// delete this</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">ErrMalformed</span><span class="w">                   </span><span class="c1">// and the loop below still returns it</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">}</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nx">sites</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">make</span><span class="p">([]</span><span class="nx">SiteID</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nx">nSites</span><span class="p">)</span><span class="w">        </span><span class="c1">// having sized itself from the claim</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">nSites</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">uvarint</span><span class="p">()</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="nx">ok</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">nSites</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="kt">uint64</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">buf</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="c1">// delete this</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">ErrMalformed</span><span class="w">                   </span><span class="c1">// and the loop below still returns it</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nx">sites</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">make</span><span class="p">([]</span><span class="nx">SiteID</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nx">nSites</span><span class="p">)</span><span class="w">        </span><span class="c1">// having sized itself from the claim</span>
 </code></pre></div>
 <p>The loop underneath runs out of bytes and refuses the input exactly as before.
 What changes is only the allocation, so the assertion has to be about the
@@ -1318,7 +1392,7 @@ elements cost 608 bytes of allocation with it and 608 without.</p>
 itself: is it green because it holds the guard, or green because it never reaches
 it? Re-running the whole sweep to find out costs half an hour, which is why the
 survivors go back through the tool by name:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mutsweep<span class="w"> </span>-only<span class="w"> </span>map.go:163,map.go:628,map.go:856<span class="w"> </span>--<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-count<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>mutsweep<span class="w"> </span>-only<span class="w"> </span>map.go:163,map.go:628,map.go:856<span class="w"> </span>--<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-count<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
 </code></pre></div>
 <p>A target that matches no refusal is an error naming the target, because the two
 ways such a list goes stale — the file edited since the report, the line mistyped
@@ -1398,7 +1472,7 @@ machine. The detection is what chooses between them.</p>
 the measurement says happens without it. <code>stalled</code> decorates a transport error with
 the connection's three states; both of its callers pass <code>ctx.Err()</code> from inside a
 <code>case &lt;-ctx.Done()</code>, so neither can hand it nil. Delete its nil check and</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>stalled(nil) = %!w(&lt;nil&gt;) (connection new, ice new, gathering new)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>stalled(nil) = %!w(&lt;nil&gt;) (connection new, ice new, gathering new)
 </code></pre></div>
 <p>a non-nil error built out of a nil one, with a formatting artefact for a message.
 Any future caller that decorated unconditionally would turn every success into a
@@ -1416,13 +1490,13 @@ its host immediately and the election never waits for anything.</p>
 <p><code>crdt/awareness</code> carries presence — who is here, where their cursor is — which is
 the busiest thing on this wire, and its fourteen refusals had been in no run. One
 survived:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nx">site</span><span class="p">,</span><span class="w"> </span><span class="nx">ok1</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">uvarint</span><span class="p">()</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nx">clock</span><span class="p">,</span><span class="w"> </span><span class="nx">ok2</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">uvarint</span><span class="p">()</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nx">gone</span><span class="p">,</span><span class="w"> </span><span class="nx">ok3</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">byteValue</span><span class="p">()</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="nx">ok1</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="nx">ok2</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="nx">ok3</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">gone</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="c1">// ← deleted</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">ErrMalformed</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">}</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nx">out</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">Update</span><span class="p">{...,</span><span class="w"> </span><span class="nx">Gone</span><span class="p">:</span><span class="w"> </span><span class="nx">gone</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nx">site</span><span class="p">,</span><span class="w"> </span><span class="nx">ok1</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">uvarint</span><span class="p">()</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nx">clock</span><span class="p">,</span><span class="w"> </span><span class="nx">ok2</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">uvarint</span><span class="p">()</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nx">gone</span><span class="p">,</span><span class="w"> </span><span class="nx">ok3</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">byteValue</span><span class="p">()</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="nx">ok1</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="nx">ok2</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="nx">ok3</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">gone</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="c1">// ← deleted</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">ErrMalformed</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">}</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="nx">out</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">Update</span><span class="p">{...,</span><span class="w"> </span><span class="nx">Gone</span><span class="p">:</span><span class="w"> </span><span class="nx">gone</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
 </code></pre></div>
 <p>What the <code>gone &gt; 1</code> clause keeps is the encoding being <strong>canonical</strong> — the same
 state being the same bytes — which is what lets snapshots here be compared by
