@@ -1,4 +1,9 @@
-# structured — the documents
+---
+title: "structured — the documents"
+weight: 50
+---
+
+# structured — the documents {#structured-the-documents}
 
 `crdt/structured` is where documents are built, and the first thing to say about
 it is that it re-implements nothing.
@@ -31,7 +36,7 @@ value and still disagree about which write produced it.
 What follows is why each is shaped the way it is. In every case the shape is
 forced by something the obvious version gets wrong.
 
-## Records whose fields merge apart
+## Records whose fields merge apart {#records-whose-fields-merge-apart}
 
 A record stored as one opaque value loses an edit: two replicas that change two
 different fields collide, and last-writer-wins discards one of them wholesale.
@@ -43,7 +48,7 @@ Stable identities come from operations. A type that needs one writes a map key
 whose value nobody reads and takes the identity of the write: unique across
 replicas, reload-safe, never reused.
 
-## Things that move
+## Things that move {#things-that-move}
 
 `crdt.List` is an RGA. It decides where a new element goes against every other
 element arriving at the same moment, per element, which is exactly right for
@@ -64,7 +69,7 @@ delete a file somebody concurrently moved into it — the file resurfaces, and
 that direction is deliberate: a tree that loses work to a concurrent delete
 cannot be trusted with a project.
 
-## Three things a register cannot be
+## Three things a register cannot be {#three-things-a-register-cannot-be}
 
 **A count.** Read it, add one, write it back: two replicas holding 7 both write 8
 and a vote is lost. The mistake is not in the register — *"add one" is not a
@@ -87,7 +92,7 @@ with what either knew. In `Set` every addition mints a tag and a removal takes
 away the tags it can see. An addition nobody had seen is untouched — not as a
 policy but for want of anything to base one on.
 
-## Formatting
+## Formatting {#formatting}
 
 Written into the sequence — a bold-on character, a bold-off character — two
 replicas bolding overlapping stretches produce interleaved markers and the text
@@ -101,7 +106,7 @@ which is exactly the bold-continues / link-does-not distinction: bold ends at
 the boundary before the next character and grows as you type; a link ends at the
 boundary after its last character and does not.
 
-## A document of blocks
+## A document of blocks {#a-document-of-blocks}
 
 A `RichText` per block converges and does not scale, for a reason that has
 nothing to do with merging: a part cannot be taken out of a composite, and a
@@ -133,7 +138,7 @@ arrangement — one that can contradict the first, leaving a block reading befor
 the block it hangs under, with no answer that is not an arbitration. Every
 sequence of depths is a document somebody can read.
 
-## Handwriting, and files
+## Handwriting, and files {#handwriting-and-files}
 
 A stroke held as one value has its whole path rewritten by every point, so the
 person watching sees the line redrawn rather than extended. `Ink` appends points
@@ -146,7 +151,7 @@ already has. `Blobs` cuts it into chunks stored under the hash of their own
 bytes, so the same chunk written by two replicas is the same key *and* the same
 value — nothing to merge, and nothing stored twice.
 
-## Three things that are not state
+## Three things that are not state {#three-things-that-are-not-state}
 
 **Undo is not a stack of states.** Restoring one throws away what everybody else
 has done since, and travels to them as an instruction to do the same. An undo
@@ -174,7 +179,7 @@ identities. Accepting is `Apply`, which merges with whatever happened meanwhile
 because that is what a replica returning from offline does; turning one down
 costs nothing, because the operations were never applied.
 
-## Start here
+## Start here {#start-here}
 
 ```go
 docs := structured.NewBlocks(1)
@@ -193,7 +198,7 @@ for _, block := range docs.List() {
 // paragraph: They run downhill.
 ```
 
-Every type here is a [`crdt.Composite`](crdt.md) underneath, so it is one
+Every type here is a [`crdt.Composite`]({{< relref "crdt.md" >}}) underneath, so it is one
 snapshot, one version and one thing to authorise — and
-[`collab`](collab.md) carries any of them between people without knowing which
+[`collab`]({{< relref "collab.md" >}}) carries any of them between people without knowing which
 it is.

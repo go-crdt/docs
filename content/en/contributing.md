@@ -1,20 +1,25 @@
-# Contributing
+---
+title: "Contributing"
+weight: 80
+---
 
-## The bar
+# Contributing {#contributing}
+
+## The bar {#the-bar}
 
 - **Pure Go, `CGO_ENABLED=0`.** The engine has no dependencies at all.
 - **100% statement coverage**, error branches included. It is a CI gate, not a
   goal. A branch no input can reach is a design smell — restructure until the
   branch is either reachable or gone. And it says every line runs, not that
   anything would notice if a line were wrong: see [what deleting every refusal
-  found](methodology.md#systematically-over-every-refusal).
+  found]({{< relref "methodology.md#deleting-every-refusal-not-the-ones-somebody-thought-to-try" >}}).
 - **Six architectures.** amd64 and arm64 natively; riscv64, loong64, ppc64le and
   s390x under qemu. s390x is big-endian, which is what keeps the deterministic
   encodings honest.
 - **Every decoder is fuzzed.** Anything read from a peer is hostile input until
   proven otherwise.
 
-## Proving things
+## Proving things {#proving-things}
 
 A green test run is not evidence that a test is doing its job. Before trusting a
 new assertion, break what it is meant to catch and confirm it goes red — the
@@ -26,7 +31,7 @@ A skipped test is not a passing one. CI sets `COLLAB_REQUIRE_WASM` on the job
 whose whole purpose is the WebAssembly end-to-end run, so a missing toolchain
 fails it rather than turning it green.
 
-## Running everything
+## Running everything {#running-everything}
 
 ```sh
 go test ./...                 # unit, property and end-to-end
@@ -40,6 +45,6 @@ GOOS=js GOARCH=wasm go test -exec="$(go env GOROOT)/lib/wasm/go_js_wasm_exec" ./
 go test -run '^$' -fuzz FuzzLoad -fuzztime 120s
 ```
 
-## Licence
+## Licence {#licence}
 
 BSD-3-Clause. Copyright the go-crdt authors.

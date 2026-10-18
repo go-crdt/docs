@@ -1,8 +1,13 @@
-# Performance
+---
+title: "Performance"
+weight: 70
+---
+
+# Performance {#performance}
 
 *Copied from [go-crdt/crdt `docs/performance.md`](https://github.com/go-crdt/crdt/blob/8aefdc0/docs/performance.md) at `8aefdc0` (v0.55.3). This page is a copy: when the two differ, the one in the crdt repository is the measurement and this is a stale transcript of it.*
 
-## On the trace everybody publishes against
+## On the trace everybody publishes against {#on-the-trace-everybody-publishes-against}
 
 The sequential editing traces at [josephg/editing-traces](https://github.com/josephg/editing-traces)
 are the common yardstick for text CRDTs — Yjs, Automerge and diamond-types all
@@ -32,7 +37,7 @@ The replay is a correctness test before it is a benchmark: a quarter of a millio
 edits at positions a real person chose, with the answer known in advance, plus a
 snapshot round trip and a full reload. CI runs it on every change.
 
-## Measured against other implementations
+## Measured against other implementations {#measured-against-other-implementations}
 
 The numbers above are ours. Setting them beside the figures other projects
 publish would compare four machines, so the other implementations were run here
@@ -73,7 +78,7 @@ The honest reading is that we are in its range on this trace, and ahead of
 everything else measured. What that costs in a property rather than throughput is
 the section after next.
 
-### What re-taking it showed
+### What re-taking it showed {#what-re-taking-it-showed}
 
 The table this replaces was taken in blocks — each library its own command, its
 own stretch of wall-clock time — before `paired.js` existed. Re-taking it is how
@@ -115,7 +120,7 @@ sessions. This one is the worst of the three and the least visible: a single row
 each library its own stretch of time allows and exactly what nothing in the
 output says.
 
-### What non-interleaving costs
+### What non-interleaving costs {#what-non-interleaving-costs}
 
 The table above prices throughput. This row prices a **property**.
 
@@ -141,7 +146,7 @@ JavaScript and we are Go, the same caveat the `Runs on` column carries for every
 other row. And its saved document is JSON — 493 KB against our 260 KB of binary —
 which compares encodings, not designs, so it is left out of the size table below.
 
-#### The first version of this row said 9.6×, and that was 14% too high
+#### The first version of this row said 9.6×, and that was 14% too high {#the-first-version-of-this-row-said-96-and-that-was-14-too-high}
 
 It was measured by running `bench.js fugue`, then `bench.js yjs`, then the Go
 benchmark: each arm its own command, each its own stretch of wall-clock time. The
@@ -210,7 +215,7 @@ unprotected, and nothing in their output says which of the two they were. The
 table above them was taken that way, before `paired.js` existed, and has not been
 re-run.
 
-### Document size, where we do badly
+### Document size, where we do badly {#document-size-where-we-do-badly}
 
 Encoding the replayed document:
 
@@ -271,7 +276,7 @@ So the first column compares one format that compresses the biggest thing in the
 file against five that do not, under a single heading. The second column is the
 one that compares the same operation applied to everybody.
 
-### Uncompressed is not the only column, and the other one says something else
+### Uncompressed is not the only column, and the other one says something else {#uncompressed-is-not-the-only-column-and-the-other-one-says-something-else}
 
 Uncompressed we are third of six at version 8, behind diamond-types and
 Automerge; at version 6 we were last. **Through gzip we are fourth of six**,
@@ -306,7 +311,7 @@ compresses once it is large enough. Both collect most of that 4.13× without
 anyone doing anything. `DirStore` and `MemoryStore` do not, and neither does a
 transport. See [issue #88](https://github.com/go-crdt/crdt/issues/88).
 
-### What the gap actually was
+### What the gap actually was {#what-the-gap-actually-was}
 
 This page used to say the rest was the text: "ours is 182 KB of characters
 written plainly, which already exceeds their whole document." That was true and
@@ -361,7 +366,7 @@ so the step is usually one byte. Measured before it was built, on this trace:
 
 which is what took the document from 620 KB to 527 KB.
 
-### Then the same question, of what was left
+### Then the same question, of what was left {#then-the-same-question-of-what-was-left}
 
 With the deletions halved, the three fields under them were 116 KB between
 them, and the same measurement answered the same way:
@@ -387,7 +392,7 @@ because this package has no dependencies and a compressor is a dependency. The
 deletions are still 43%, but three quarters of that is now the offsets and spans
 themselves rather than the identities attached to them.
 
-### The document size gap is an encoding, not a compressor
+### The document size gap is an encoding, not a compressor {#the-document-size-gap-is-an-encoding-not-a-compressor}
 
 At version 4 a real document encodes to 478 KB where diamond-types takes 109 KB,
 and this page used to put that down to the text being written plainly. It is not
@@ -417,7 +422,7 @@ Against diamond-types' 111 616 bytes that is **87%**. The deletion fields are th
 sharpest: 206 KB to 18, because a column of small gaps and spans repeats itself
 in a way the same numbers scattered between other fields do not.
 
-#### Which compressor, measured rather than assumed
+#### Which compressor, measured rather than assumed {#which-compressor-measured-rather-than-assumed}
 
 Every one of these is pure Go. Same columns, best setting of each:
 
@@ -438,7 +443,7 @@ column boundaries are worth more than the redundancy across them.
 That is the one dependency worth taking: it buys 14% against the next best,
 where zstd's advantage was one column.
 
-#### And what it costs, which decides the setting
+#### And what it costs, which decides the setting {#and-what-it-costs-which-decides-the-setting}
 
 brotli's top quality is very slow. The ladder, per column, on the same 478 KB:
 
@@ -465,7 +470,7 @@ format that cannot reach the number. Where a SIMD brotli encoder would pay is
 exactly the q10 and q11 rows, and what it would buy there is the 167 or 425
 milliseconds rather than any bytes. q9 does not need it.
 
-#### What is not decided by this
+#### What is not decided by this {#what-is-not-decided-by-this}
 
 `Snapshot` says the same state is the same bytes, and every format change so far
 has kept that. A compressor's output is deterministic for a build and not
@@ -475,7 +480,7 @@ whoever stores or sends them compresses. A plain whole-blob compression of the
 columnar layout gives 97 811 rather than 96 703, which is the price of keeping
 the boundary in the right place.
 
-#### And so, version 5
+#### And so, version 5 {#and-so-version-5}
 
 The format writes the columns. Each is length-prefixed, so whoever stores a
 snapshot can take them apart and compress them one at a time. Measured on the
@@ -487,7 +492,7 @@ Small documents pay a little for it: nine column lengths is nine bytes, so the
 version 2 fixture grows from 96 bytes to 105. This is a format for documents,
 and a document with two runs in it is not the one the 478 KB came from.
 
-#### And so, version 8
+#### And so, version 8 {#and-so-version-8}
 
 Version 5 gave every field a column and left every column one encoding, which is
 a uvarint per value however many times that value is the same one. Version 8
@@ -532,7 +537,7 @@ general-purpose compressor was already finding almost all of this; what version 
 changes is the size of a snapshot nobody has compressed, which is what `DirStore`,
 `MemoryStore` and every transport hold, and it halves it.
 
-#### The compressed text chunk, and why nothing writes one
+#### The compressed text chunk, and why nothing writes one {#the-compressed-text-chunk-and-why-nothing-writes-one}
 
 diamond-types LZ4s its text for any document over twenty bytes, and the obvious
 next step here is the same thing with `compress/flate`. A version 8 column says
@@ -556,7 +561,7 @@ is the same order [#83](https://github.com/go-crdt/crdt/pull/83) shipped
 snapshots raw and does not need them comparable — which is a decision about
 callers rather than about the format.
 
-### Memory
+### Memory {#memory}
 
 Only where it can be read honestly. Yjs is JavaScript, so `heapUsed` after a
 forced collection is its document; Automerge, Loro and diamond-types keep theirs
@@ -594,7 +599,7 @@ paragraph said it "varied by not one byte", which was true of 0.4.0 and is not
 true now. Yjs read 5 680, 5 680 and 5 998 (`gc: true`) and 7 256 three times
 (`gc: false`).
 
-### What this does not say
+### What this does not say {#what-this-does-not-say}
 
 - **These libraries do not all do the same job.** Automerge maintains a whole
   JSON document with history, rich-text marks and branch metadata; Yjs and Loro
@@ -630,7 +635,7 @@ cd docs/comparison && npm install
 CRDT_TRACE=…/automerge-paper.json.gz node --expose-gc bench.js yjs --runs 10
 ```
 
-## Ten thousand clients on one file
+## Ten thousand clients on one file {#ten-thousand-clients-on-one-file}
 
 The trace above is one person typing. This is the other question: what happens
 when ten thousand of them are on the same document and the network is broken.
@@ -674,7 +679,7 @@ Without it the run still converges and proves less — every client edits its ow
 almost-empty copy and they meet once at the end. With it, three quarters of the
 edits land on a document somebody else has already been writing.
 
-### What actually grows with the number of clients
+### What actually grows with the number of clients {#what-actually-grows-with-the-number-of-clients}
 
 A replica's memory is a function of the document, not of how many people are
 editing it: ten thousand clients each hold one document, and the document is the
@@ -703,7 +708,7 @@ A composite's version is per part **and** per site, so it multiplies: 1 000 site
 cost 4 758 bytes over one part and 47 979 over sixteen. That is the same argument
 `structured.Blocks` is built on, measured at the version rather than the part.
 
-## Synthetic benchmarks
+## Synthetic benchmarks {#synthetic-benchmarks}
 
 On a document of 10 000 characters:
 
@@ -733,7 +738,7 @@ published, which is what says the comparison is between the two versions and not
 between two sessions. Fifty releases cost 15% on `ApplyRemote` and 16% on `Load`
 and nothing anywhere else.
 
-### † A benchmark whose answer depended on how long you ran it
+### † A benchmark whose answer depended on how long you ran it {#a-benchmark-whose-answer-depended-on-how-long-you-ran-it}
 
 `ScatteredInsert` inserted into a document it never stopped growing: one
 character per iteration, from the same `b.N` loop whose length Go chooses by
@@ -768,9 +773,9 @@ both trees, the 0.5.0 commit reads 405.8 ns and today reads 410.6 ns — 1.01×.
 published 0.37 µs was about right for what it names; it just could not be
 obtained twice.
 
-## What changed, and why
+## What changed, and why {#what-changed-and-why}
 
-### The position mark, and then a list that walks both ways
+### The position mark, and then a list that walks both ways {#the-position-mark-and-then-a-list-that-walks-both-ways}
 
 Finding a rune offset means walking the document. The first measurement was
 blunt: inserting at the end of a 10 000-character document took **68 052 ns**
@@ -788,7 +793,7 @@ it.
 that put this in the same range as the fastest implementations rather than an
 order of magnitude behind them.
 
-### Characters indexed by sequence number, not by identity
+### Characters indexed by sequence number, not by identity {#characters-indexed-by-sequence-number-not-by-identity}
 
 Integration finds a character from the identity an operation names. That was a
 `map[ID]*item`, and the map cost about as much again as the character it pointed
@@ -799,7 +804,7 @@ in a slice is the sequence number**.
 107.7 → 73.1 bytes per character, and the write path halved — a map insert per
 character cost more than all the list work around it.
 
-### Run-length blocks
+### Run-length blocks {#run-length-blocks}
 
 A character used to be a struct of its own: identity, clock, origin pointer,
 rune, deletion, next. Everything but the rune is derivable. A block is a run of
@@ -819,7 +824,7 @@ whole run.
 index shrank with it: it now holds one entry per run rather than one per
 character.
 
-### Waiting operations filed under what they are waiting for
+### Waiting operations filed under what they are waiting for {#waiting-operations-filed-under-what-they-are-waiting-for}
 
 A peer that sends a long history back to front used to be quadratic: every
 arrival rescanned everything still parked. Delivering the real trace in reverse —
@@ -828,7 +833,7 @@ arrival rescanned everything still parked. Delivering the real trace in reverse 
 Operations now wait in a map keyed by the single operation each needs, so
 integrating one wakes exactly its dependents. **210 s → 0.30 s.**
 
-### Deletions stored as stretches
+### Deletions stored as stretches {#deletions-stored-as-stretches}
 
 A block used to keep one deletion identity per character as soon as any
 character in it died — 2289 KiB of the 4015 the real trace occupied, and half of
@@ -855,7 +860,7 @@ never fill a gap between two records, or lead into one, because a site's
 operations are applied in sequence order — a record whose identities follow this
 deletion's cannot already exist.
 
-### The snapshot format writes runs
+### The snapshot format writes runs {#the-snapshot-format-writes-runs}
 
 `Snapshot` wrote one record per character: identity, clock, origin, the
 character, and its deletion — eight numbers each, twenty-five bytes per visible
@@ -885,7 +890,7 @@ replacing one character's deletion when two replicas delete it at once cuts
 another. Writing them joined hides that. The randomised convergence suite found
 this immediately, by comparing encoded state rather than text.
 
-### An index over the runs
+### An index over the runs {#an-index-over-the-runs}
 
 The list answers "what follows this" in a step and everything else by walking,
 which the mark makes cheap only while the next position is near the last one. Two
@@ -943,7 +948,7 @@ here: no per-run node, a depth of four rather than seventeen, and iteration from
 the leaves. It costs the pointer identity of a block, which the mark, the
 per-site index and every walk in `text.go` are written in terms of.
 
-#### The arithmetic, since it was measured rather than guessed at
+#### The arithmetic, since it was measured rather than guessed at {#the-arithmetic-since-it-was-measured-rather-than-guessed-at}
 
 A block is **152 bytes**, and Go's size classes here are sixteen bytes apart, so
 it is allocated in the **160-byte class**: eight bytes of every block are paid
@@ -969,7 +974,7 @@ next person does not look at it again:
 So the block cannot lose a size class without giving something up, and what it
 would save is about 4% of what a real document holds.
 
-#### What the other answer is worth
+#### What the other answer is worth {#what-the-other-answer-is-worth}
 
 The B-tree removes the per-run node rather than shrinking it, and that is a
 different order of answer. `TestWhatTheBTreeWouldBuy` measures it the same way,
@@ -993,7 +998,7 @@ branching factor they are a few percent of the leaves.
 That was the case for spending a project on it. It was spent, and the prize did
 not survive contact — see below.
 
-#### It was built, and it does not pay
+#### It was built, and it does not pay {#it-was-built-and-it-does-not-pay}
 
 The B-tree exists on the `perf/btree` branch: runs in the leaves, summaries in
 the parent, the AVL removed, the whole suite green on the real trace, and its
@@ -1028,7 +1033,7 @@ per-run node costs about what a per-run entry costs, so replacing one with the
 other buys nothing — and that is worth knowing before anyone spends the project
 again.
 
-### A second summary, for UTF-16 offsets
+### A second summary, for UTF-16 offsets {#a-second-summary-for-utf-16-offsets}
 
 Addressing the document in UTF-16 code units means turning a count of units into
 a count of characters, and the obvious way to do that is to walk the document
@@ -1084,7 +1089,7 @@ and UTF-16 offsets are equal by construction: `InsertAtEndUTF16` measures 44.9 n
 against `InsertAtEnd`'s 48.9, and 46.5 ns on the same document with one emoji
 added, which is the descent.
 
-## Where the memory goes now
+## Where the memory goes now {#where-the-memory-goes-now}
 
 Measured on the real trace: 10 824 blocks holding 182 315 characters, of which
 77 463 are tombstones, in 4.4 MiB.
@@ -1097,7 +1102,7 @@ Measured on the real trace: 10 824 blocks holding 182 315 characters, of which
 
 The remaining lever is still the block headers, now 160 bytes each.
 
-## Complexity
+## Complexity {#complexity}
 
 | Operation | Cost |
 |---|---|

@@ -1,6 +1,11 @@
-# collab — the service
+---
+title: "collab — the service"
+weight: 60
+---
 
-## What the server is not
+# collab — the service {#collab-the-service}
+
+## What the server is not {#what-the-server-is-not}
 
 It is not an arbiter. The document is a CRDT, so the outcome of two concurrent
 edits is decided by the operations themselves, not by whoever the server heard
@@ -17,15 +22,15 @@ Everything else follows from that:
 - **Operations need no sequencing on the wire.** Applying them is idempotent and
   order-independent, so a batch is relayed exactly as it arrived.
 
-## Two counters, and where they show up here
+## Two counters, and where they show up here {#two-counters-and-where-they-show-up-here}
 
 `crdt` gives every operation a per-site sequence number and a Lamport clock (see
-[the engine's design](crdt.md)). The sequence number is what makes this service
+[the engine's design]({{< relref "crdt.md" >}})). The sequence number is what makes this service
 possible: because a site's numbers have no gaps, a version vector describes a
 replica *exactly*, so "what have I missed" is answerable in one message rather
 than by replaying a log.
 
-## Joining, and the direction people forget
+## Joining, and the direction people forget {#joining-and-the-direction-people-forget}
 
 A `Welcome` carries three things:
 
@@ -41,7 +46,7 @@ on one replica for ever. With the server's vector in hand the client answers wit
 exactly what is missing. `TestResumeCarriesWorkBothWays` fails if either
 direction is dropped.
 
-## One replica identity per participant
+## One replica identity per participant {#one-replica-identity-per-participant}
 
 `crdt` assumes every replica editing a document has an identity of its own. When
 two do not, the failure is not a conflict anyone can see: both mint the same
@@ -67,7 +72,7 @@ operation and once for its origin, which roughly doubles the encoded size agains
 small dense numbers. A server handing out small identities per session is
 cheaper, and it is the server that can guarantee uniqueness anyway.
 
-## Two carriers, and why there are two
+## Two carriers, and why there are two {#two-carriers-and-why-there-are-two}
 
 A browser gets `collab.WebSocket` — the session's own framing, four message kinds
 over a plain WebSocket with a kind byte and each field length-prefixed. Native
@@ -97,7 +102,7 @@ browser none of that matters, which is why gRPC is still here — and why the
 WebSocket listener below, which carries a cookie across the upgrade, is about
 authenticating a gRPC session rather than about how a browser reaches the server.
 
-## Backpressure
+## Backpressure {#backpressure}
 
 A participant that stops reading cannot be allowed to hold up the document, and
 cannot be silently skipped either — skipping an operation would leave that
@@ -108,7 +113,7 @@ queue depth is `Config.Backlog`.
 This is the one place the server makes a decision, and it is a decision about the
 connection, never about the document.
 
-## Persistence
+## Persistence {#persistence}
 
 `Store` holds snapshots rather than an operation log, because a snapshot is
 self-contained: `crdt` guarantees the whole history is recoverable from one, so a
@@ -124,7 +129,7 @@ Documents stay in memory once opened. For the fleet's expected shape — a handf
 of documents per server — that is the right trade; a server hosting very many
 would want eviction, which is a change to `open` and `leave` alone.
 
-## Testing
+## Testing {#testing}
 
 Three layers, because each catches what the others cannot:
 
@@ -143,7 +148,7 @@ A skipped test is not a passing one, so CI sets `COLLAB_REQUIRE_WASM` on the job
 that exists to run the last of these: a missing Node or wasm glue fails it rather
 than turning it green.
 
-## Who may open what
+## Who may open what {#who-may-open-what}
 
 `Config.Authorize` decides it, once per session, after the join arrives and
 before the document is touched — so a refused session neither reads the store nor
@@ -184,7 +189,7 @@ collab.NewServer(collab.Config{
 works alone and the question is whether they meet. A session with no cookie never
 becomes one: the refusal happens during the handshake, before any stream exists.
 
-## Next
+## Next {#next}
 
 - Postgres-backed `Store` against [weft's HA datastore](https://github.com/openweft),
   keeping snapshots and an operation log.
