@@ -113,6 +113,54 @@ mutsweep: 14 refusals, ...         # nothing ✗
 Which is how the last row was found, and it has to be run for every subpackage
 rather than for the one being worked in.
 
+### The same check, not run — and what came of that
+
+Six days later the 55 unnamed refusals were gone after for real: `collab`'s root
+was re-swept **by name**, in three chunks of 55, 61 and 32, and the result was
+published as
+
+> That closes the root package: 148 refusals over three chunks.
+
+The package holds **245**. Ninety-seven refusals in eight files had been in no
+chunk at all — `dirstore.go` 25, `client.go` 21, `bcast.go` 16, `capability.go`
+12, `dircompress.go` 8, `authorize.go` 7, `durability.go` 6, `backoff.go` 2.
+
+The check above is exactly the one that catches it, it is written on this page
+three paragraphs up, and it was not run. Nothing in the act of adding three
+numbers together asks the package anything, and a Σ of chunks looks like a
+measurement — it has units and a total and it is reproducible. It is not one.
+
+**So the check became a flag, printing what a plan is made of.** `mutsweep
+-tally` (v0.6.0) answers *which file*, not merely *how many*, runs nothing, and
+needs no command:
+
+```console
+$ mutsweep -dir . -tally
+mutsweep: not swept, the darwin/arm64 build excludes them: bcast_js.go, ...
+245 refusals in 22 file(s) of .
+     31  wire.go
+     25  dirstore.go
+     24  server.go
+     21  client.go
+     17  follow.go
+     ...
+      2  backoff.go
+```
+
+With `-files` it counts what a chunk *will* sweep, so the comparison is made
+before the hour is spent instead of after the claim is published. The point is
+not the convenience: a check that answers a question **next to** the one being
+asked — "how many" when the sentence says "which" — does not protect anybody,
+and this page is the evidence.
+
+This is where the shape of the campaign matters. The Google system cited further
+down this page mutates **one node per line** of a code review's **diff**, after
+excluding what it calls *arid* nodes — code whose mutants are unproductive, log
+statements being the example given — and surfaces the survivors as findings in
+review. A diff-shaped campaign never has to be chunked, so it never has to be
+accounted for. A whole-package campaign does, and that accounting is the part no
+instrument here was doing.
+
 The eighth filled a hole that could not have been filled by pointing at it. The
 browser half of `collab` — the WebRTC peer, the BroadcastChannel bus, the Web
 Locks election, the browser's WebSocket — is behind `//go:build js && wasm`, and
