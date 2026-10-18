@@ -1,6 +1,11 @@
-# crdt — the engine
+---
+title: "crdt — the engine"
+weight: 40
+---
 
-## Why a CRDT, and why in Go
+# crdt — the engine {#crdt-the-engine}
+
+## Why a CRDT, and why in Go {#why-a-crdt-and-why-in-go}
 
 The alternative is operational transformation, as ShareDB and Google Docs use.
 OT needs a server that is authoritative over ordering, a transform function that
@@ -13,7 +18,7 @@ A browser client and the server run **the same merge implementation**, not two
 implementations that have to agree. A JavaScript Yjs client paired with a Go
 server cannot make that claim.
 
-## Why not an existing library
+## Why not an existing library {#why-not-an-existing-library}
 
 Checked before writing anything (2026-08-15):
 
@@ -31,7 +36,7 @@ Checked before writing anything (2026-08-15):
 
 So: built here, informed by the YATA and RGA literature.
 
-## The algorithm
+## The algorithm {#the-algorithm}
 
 RGA — a replicated growable array. Every character has a unique [ID] and names
 the character it was inserted **after**, so an insertion is positioned relative
@@ -53,7 +58,7 @@ replica inserted after some character carries a higher Lamport clock than that
 character — and so does everything inserted after *that* — so a lower clock can
 only belong to something outside the region the insertion can land in.
 
-### Two counters, deliberately
+### Two counters, deliberately {#two-counters-deliberately}
 
 Each operation carries both:
 
@@ -72,7 +77,7 @@ Keeping `Seq` contiguous has a second effect worth naming: `Apply` will not
 integrate an operation until its predecessor from the same site has landed, so
 delivery is causally ordered per site whatever the transport does.
 
-### What the ordering rule actually decides
+### What the ordering rule actually decides {#what-the-ordering-rule-actually-decides}
 
 Under that causal readiness rule, convergence turns out **not** to depend on the
 Lamport clock: an experiment that disabled the clock comparison entirely still
@@ -86,7 +91,7 @@ clock; `TestConcurrentInsertAtSamePosition` pins the tie-break.
 This is recorded because it is the kind of thing that looks like dead weight to a
 later reader with a profiler.
 
-### Interleaving
+### Interleaving {#interleaving}
 
 RGA keeps a run of characters typed one after another contiguous, even when
 someone else is typing at the same position, because each character's clock
@@ -100,7 +105,7 @@ can see which rule decided, only that every replica decided the same way. RGA is
 what ships because it is the variant whose correctness can be demonstrated rather
 than argued.
 
-## Telling a view what changed
+## Telling a view what changed {#telling-a-view-what-changed}
 
 An editor cannot be handed the new text. Replacing the whole buffer throws away
 the selection, the scroll position, the folded regions and every decoration, and
@@ -122,7 +127,7 @@ overhead to a fifth over [Doc.Apply].
 Finding where each edit landed costs a walk up the index per operation, so
 [Doc.Apply] does not collect anything and does not pay.
 
-## Anchors, and authorship
+## Anchors, and authorship {#anchors-and-authorship}
 
 An editor needs somewhere stable to hang a comment. An offset is not that: the
 moment anyone edits above it, it points somewhere else. What does not move is the
@@ -142,7 +147,7 @@ pass, joining stretches by the same replica so that the answer describes the tex
 rather than how this replica happens to have split its blocks — two replicas
 holding the same document return the same runs.
 
-## Snapshots
+## Snapshots {#snapshots}
 
 A snapshot is every character in document order, alive or tombstoned, plus the
 version vector. Two properties make it more than a dump:
@@ -158,7 +163,7 @@ version vector. Two properties make it more than a dump:
 A deletion's Lamport clock is the one thing not kept — it never affects ordering
 — so replayed deletions carry their sequence number as their clock.
 
-### Loading is a trust boundary
+### Loading is a trust boundary {#loading-is-a-trust-boundary}
 
 Snapshots arrive over a network, and most of the work in `Load` is refusing
 states no replica could have reached. Fuzzing found every one of these; each was
@@ -176,7 +181,7 @@ a real way to make a document unable to reproduce itself:
 - A site listed twice in the version vector, a concurrent deletion aimed at the
   root sentinel, and a concurrent deletion of a character still visible.
 
-## Counting in UTF-16
+## Counting in UTF-16 {#counting-in-utf-16}
 
 The document counts characters. CodeMirror, the DOM, the Language Server
 Protocol and every index into a JavaScript string count UTF-16 code units, in
@@ -205,7 +210,7 @@ it, so converting one of them against the finished document is right only for
 the last. A caller patching its own copy has the intermediate text in hand and
 converts there.
 
-### An offset that splits a character is refused
+### An offset that splits a character is refused {#an-offset-that-splits-a-character-is-refused}
 
 A UTF-16 offset can land between the two code units of one character. There are
 three things to do about it — round down, round up, or refuse — and the third is
@@ -232,7 +237,7 @@ second API. An offset that splits a character is always exactly one past that
 character's first unit, so `RuneOffset(pos-1)` is the position of the character
 it landed inside, and it cannot fail.
 
-## Awareness
+## Awareness {#awareness}
 
 Cursors and selections are not part of the document. They are never persisted,
 they are dropped when a peer leaves, and merging them needs nothing stronger than
@@ -254,16 +259,16 @@ character out draws a caret a character out until the next update arrives; it
 can never edit anything and it is never stored. A peer counting in UTF-16
 converts at its own edge, where it has to clamp in any case.
 
-## What was next, and is now done
+## What was next, and is now done {#what-was-next-and-is-now-done}
 
 1. **`Collab`** — a per-document gRPC hub over
    [`grpc-transports/websocket`](https://github.com/grpc-transports/websocket)
    that fans out operations, snapshots late joiners and persists, with no
-   transform because the CRDT converges. See [collab](collab.md).
+   transform because the CRDT converges. See [collab]({{< relref "collab.md" >}}).
 2. **The end-to-end proof**: two `js/wasm` clients editing through that server,
    asserting convergence programmatically.
 3. **Run-length blocks**, at 73.1 → 4.19 bytes per character — see
-   [performance](../performance.md).
+   [performance]({{< relref "../performance.md" >}}).
 
 What has grown since is the layer above: see
-[structured — the documents](structured.md).
+[structured — the documents]({{< relref "structured.md" >}}).

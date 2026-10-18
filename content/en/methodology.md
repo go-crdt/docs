@@ -1,11 +1,16 @@
-# How convergence is proven
+---
+title: "How convergence is proven"
+weight: 20
+---
+
+# How convergence is proven {#how-convergence-is-proven}
 
 A text CRDT is worth nothing unless replicas that saw the same operations agree.
 That claim is easy to assert and easy to believe wrongly, so this is how it is
 established here — and, just as usefully, what each layer of testing does *not*
 establish.
 
-## Randomised sessions sample; they do not cover
+## Randomised sessions sample; they do not cover {#randomised-sessions-sample-they-do-not-cover}
 
 Three hundred randomised sessions run replicas editing concurrently while the
 network delivers late, out of order, and with duplicates. Once delivery catches
@@ -16,14 +21,14 @@ rather than covering it. The counterexamples in the CRDT literature are four to
 eight operations long, which is precisely the range random schedules explore
 thinly.
 
-## So every ordering is also tried
+## So every ordering is also tried {#so-every-ordering-is-also-tried}
 
 For small concurrent histories — replicas editing blind, exchanging everything,
 then editing blind again — **every permutation** of the resulting operations is
 applied to a fresh replica, and all must produce byte-identical state. Forty such
 histories, exhaustively.
 
-## Replicas are compared on their state, not their text
+## Replicas are compared on their state, not their text {#replicas-are-compared-on-their-state-not-their-text}
 
 Two replicas agreeing on the text is the weaker claim: they can display the same
 characters while disagreeing about the identities underneath, and diverge on the
@@ -31,7 +36,7 @@ next edit. So the assertions compare **encoded snapshots**, which are canonical 
 the same operations always produce the same bytes, on every architecture,
 big-endian included.
 
-## The instruments are checked against known breakage
+## The instruments are checked against known breakage {#the-instruments-are-checked-against-known-breakage}
 
 A green test tells you nothing about whether the test can fail. Each ordering rule
 was therefore disabled deliberately, one at a time, to confirm the suite goes red.
@@ -48,7 +53,7 @@ user — whoever had seen more of the document when they typed is placed first,
 rather than whoever happens to hold the smaller identifier. A test was written to
 pin exactly that, and it fails without the clock.
 
-## Deleting every refusal, not the ones somebody thought to try
+## Deleting every refusal, not the ones somebody thought to try {#deleting-every-refusal-not-the-ones-somebody-thought-to-try}
 
 Doing that by hand finds what you thought to try. Since 2026-10-04 it is done
 mechanically instead, over every refusal in the code that reads bytes somebody
@@ -113,7 +118,7 @@ mutsweep: 14 refusals, ...         # nothing ✗
 Which is how the last row was found, and it has to be run for every subpackage
 rather than for the one being worked in.
 
-### The same check, not run — and what came of that
+### The same check, not run — and what came of that {#the-same-check-not-run-and-what-came-of-that}
 
 Six days later the 55 unnamed refusals were gone after for real: `collab`'s root
 was re-swept **by name**, in three chunks of 55, 61 and 32, and the result was
@@ -161,7 +166,7 @@ review. A diff-shaped campaign never has to be chunked, so it never has to be
 accounted for. A whole-package campaign does, and that accounting is the part no
 instrument here was doing.
 
-### `collab`'s root, finished and named — 2026-10-18
+### `collab`'s root, finished and named — 2026-10-18 {#collabs-root-finished-and-named-2026-10-18}
 
 Five chunks, every file named, and the total compared with the package rather
 than with itself:
@@ -255,7 +260,7 @@ Four of the five verdicts are PIT's under other names (*Killed*, *Survived*,
 *Timed Out*, *Non viable*, *Run error*), which is some evidence they are the
 joints of the thing rather than one tool's habits.
 
-## The nine, from the first five runs
+## The nine, from the first five runs {#the-nine-from-the-first-five-runs}
 
 Four of them are one mistake: **a test asserting that an error happened**, where
 the code after the deleted guard also fails and says something else. The
@@ -290,7 +295,7 @@ test that collects sets the interval, and the helper written so a test need not
 wait for a timer sets the interval ITSELF — and with the line deleted a server
 with collection off gave back thirty versions' worth of tombstones.
 
-## And the fifty-seven of those that were not
+## And the fifty-seven of those that were not {#and-the-fifty-seven-of-those-that-were-not}
 
 Every one was read. They fall into shapes:
 
@@ -317,7 +322,7 @@ at all (Petrović & Ivanković, *Practical Mutation Testing at Scale: A View Fro
 Google*, IEEE TSE, 2021). Here the filtering is a reading of each survivor,
 which is affordable because there are a hundred and twenty of them.
 
-## The sixth run, where half the survivors were real
+## The sixth run, where half the survivors were real {#the-sixth-run-where-half-the-survivors-were-real}
 
 The first five runs swept the wire, the stores and the structured layer, and
 yielded nine. The sixth swept what everything else is built on — the composite,
@@ -399,7 +404,7 @@ to settle — a bound of exactly the shape in the table above, which the suite d
 not notice and which turns out to size nothing: 14 bytes claiming 16 777 216
 elements cost 608 bytes of allocation with it and 608 without.
 
-## Answering a report
+## Answering a report {#answering-a-report}
 
 Writing a test for a survivor leaves a question the test cannot answer about
 itself: is it green because it holds the guard, or green because it never reaches
@@ -423,7 +428,7 @@ still hung, and that is not a gap in its test — the command a sweep runs is th
 *whole* suite, and other tests in the package wait it out too; the test written
 for it fails in thirty seconds.
 
-## The same defect twice, two files apart
+## The same defect twice, two files apart {#the-same-defect-twice-two-files-apart}
 
 The seventh run found, in `Map.resurrects`, the defect the sixth had found in
 `Doc.collides`. Both ask something of **every operation that arrives twice**, and
@@ -444,7 +449,7 @@ the refusal that prevented it was held by nothing. A guard of the form
 it is the predicate's *scope*, and without it the predicate answers about an
 object it knows nothing about by reading zeros.
 
-## The browser half of a pure Go engine
+## The browser half of a pure Go engine {#the-browser-half-of-a-pure-go-engine}
 
 The point of writing this in Go is that a tab and a server run the *same* merge
 code. The transports underneath them are not the same: a tab reaches another tab
@@ -500,7 +505,7 @@ a value nothing constructs, and one still blocked on a fixture — `OpenBroadcas
 *succeeds* on a context that is already over, because a tab alone in a room becomes
 its host immediately and the election never waits for anything.
 
-## One clause of four, in a package nobody had pointed at
+## One clause of four, in a package nobody had pointed at {#one-clause-of-four-in-a-package-nobody-had-pointed-at}
 
 `crdt/awareness` carries presence — who is here, where their cursor is — which is
 the busiest thing on this wire, and its fourteen refusals had been in no run. One
@@ -539,7 +544,7 @@ which read as tests waiting on deadlines; measured afterwards in pairs it was
 0.86x and 0.98x, and the four-fold was a loaded machine. The verdict — survived
 or killed — does not care how loaded the machine is.
 
-## Hostile input is assumed
+## Hostile input is assumed {#hostile-input-is-assumed}
 
 Everything a replica receives comes off a network, so every decoder is a trust
 boundary and every decoder is fuzzed. This found **five** states a snapshot could
@@ -556,7 +561,7 @@ reproduce its own history:
 
 The inputs that found them are committed, so they run on every build.
 
-## The end-to-end gate
+## The end-to-end gate {#the-end-to-end-gate}
 
 Compiling for `js/wasm` proves nothing on its own — plenty of code compiles and
 then fails to run. So the acceptance test runs **three replicas across two

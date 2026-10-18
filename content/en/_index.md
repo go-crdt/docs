@@ -1,17 +1,22 @@
-# go-crdt
+---
+title: "Home"
+weight: 10
+---
+
+# go-crdt {#go-crdt}
 
 Two pure-Go modules for collaborative editing.
 
 | Package | What it is |
 |---|---|
-| [`crdt`](repos/crdt.md) | the engine — a replicated text, list and map, operations, version vectors, snapshots, presence |
-| [`crdt/structured`](repos/structured.md) | the documents built on it — blocks, formatting, sheets, diagrams, sets, proposals |
-| [`collab`](repos/collab.md) | the gRPC service, server and client that carry a document between people |
+| [`crdt`]({{< relref "repos/crdt.md" >}}) | the engine — a replicated text, list and map, operations, version vectors, snapshots, presence |
+| [`crdt/structured`]({{< relref "repos/structured.md" >}}) | the documents built on it — blocks, formatting, sheets, diagrams, sets, proposals |
+| [`collab`]({{< relref "repos/collab.md" >}}) | the gRPC service, server and client that carry a document between people |
 
 Both are **CGO-free**, held at **100% statement coverage**, and validated on all six
 of Go's 64-bit targets.
 
-## Why a CRDT
+## Why a CRDT {#why-a-crdt}
 
 A conflict-free replicated data type settles concurrent edits by the operations
 themselves, so nothing has to be authoritative. Three things follow that the
@@ -23,7 +28,7 @@ offer:
 - **a participant can keep typing with the network down** and reconcile later;
 - **the server can be restarted or replaced** without a handover protocol.
 
-## Why in Go
+## Why in Go {#why-in-go}
 
 Because the browser can then run it too. The engine compiles to `js/wasm`, so a
 browser tab and the server execute the **same** merge implementation rather than
@@ -31,7 +36,7 @@ two implementations that have to agree. A JavaScript client paired with a Go
 server cannot make that claim, and the acceptance test in `collab` exists to hold
 this one to it: three replicas across two runtimes, converging.
 
-## Start here
+## Start here {#start-here}
 
 ```go
 ada, grace := crdt.New(1), crdt.New(2)
