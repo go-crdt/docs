@@ -161,6 +161,46 @@ review. A diff-shaped campaign never has to be chunked, so it never has to be
 accounted for. A whole-package campaign does, and that accounting is the part no
 instrument here was doing.
 
+### `collab`'s root, finished and named — 2026-10-18
+
+Five chunks, every file named, and the total compared with the package rather
+than with itself:
+
+| chunk | files | subjects | not mutants | caught | survived | **held** | named |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `wire.go`, `server.go` | 55 | 24 | 27 | 4 | **2** | 2 |
+| 2 | `follow.go`, `sites.go`, `rejoin.go`, `grpc.go`, `stable.go`, `multistore.go` | 61 | 28 | 30 | 3 | **1** | 2 |
+| 3 | `reconnect.go`, `parts.go`, `tiered.go`, `serve_websocket.go`, `websocket.go`, `store.go` | 32 | 22 | 7 | 3 | **3** | 0 |
+| 4 | `client.go`, `capability.go`, `bcast.go`, `authorize.go`, `backoff.go` | 58 | 30 | 22 | 6 | **3** | 3 |
+| 5 | `dirstore.go`, `dircompress.go`, `durability.go` | 39 | 11 | 25 | 3 | **2** | 1 |
+| | | **245** | **115** | **111** | **19** | **11** | **8** |
+
+245 is `mutsweep -dir . -tally`'s answer for the package, not the sum of the
+rows — the two agree, which is the whole point of the section above. The five
+`*_js.go` files are not in it: the darwin build excludes them, the tool says so
+by name, and they are the 41 of the browser-half row further down.
+
+⛔ **This is not additive to the 865.** It re-sweeps ground the "collab, the
+wire" and "collab, the stores" rows covered under theme names, and that is why
+it exists: those rows could not say which files they had read.
+
+Three of the eleven are worth naming here, because each one looked like
+something cheaper than it was:
+
+| guard | what it looked like | what deleting it does |
+| --- | --- | --- |
+| `bcast.go:186`, `if n <= 0` | a check for a truncated header | **panics**. `binary.Uvarint` returns a *negative* count for an overflowing varint, and `rest[n:]` is then `slice bounds out of range [-11:]`. On the BroadcastChannel bus, so the bytes come from another **tab** |
+| `dirstore.go:322`, the unpack error in `Release` | a lost error message | the error becomes `ErrChanged`, the one `Tiered.Archive` treats as **benign** — so a corrupt file is skipped in silence by the only code that knew |
+| `client.go:518`, `publish`'s empty batch list | an empty frame nobody minds | **every join** pays a whole snapshot write: `pushMissing` calls it with what a fresh participant has, which its own comment says is nothing |
+
+And the eight named-not-pinned were each *measured* rather than argued, because
+two of them had been read wrong first. `client.go:285`'s fast path would have
+been load-bearing if `LoadComposite` answered `ErrUnknownFormat` for an empty
+snapshot — it answers `malformed encoding`, so the guard is equivalent.
+`stable.go:263` was first read as a floor of "nothing" returned as a floor that
+exists, which would have let a collection run below what anybody acknowledged;
+the function's last guard already returns the same `(nil, false)`.
+
 The eighth filled a hole that could not have been filled by pointing at it. The
 browser half of `collab` — the WebRTC peer, the BroadcastChannel bus, the Web
 Locks election, the browser's WebSocket — is behind `//go:build js && wasm`, and
