@@ -30,6 +30,67 @@ possible: because a site's numbers have no gaps, a version vector describes a
 replica *exactly*, so "what have I missed" is answerable in one message rather
 than by replaying a log.
 
+## What everybody has, and which participant is behind {#stable-and-acknowledged}
+
+Those version vectors are also what lets the server answer a question no replica
+can answer alone. A participant sends its version *after* it applies what the
+server sent; the server keeps the last one from each; and `Server.Stable` returns
+the **meet** of them — the element-wise minimum — which is what everybody in the
+room has. It is the thing [`crdt.Doc.Collect`]({{< relref "crdt.md" >}}) asks for
+and cannot compute: a replica cannot know what the others have delivered, and the
+server is what every operation passes through.
+
+Nothing depends on an acknowledgement arriving. One that is late or lost holds
+the answer back, and holding it back is the safe direction. For the same reason a
+participant that has said nothing counts as having nothing, which takes the meet
+to nothing: the participant the server has heard nothing from is exactly the one
+that might not have seen the operation in question.
+
+⚠ **It is the meet over the participants connected *now*,** so it is not yet a
+version anything may be collected against. A replica that is offline holding work
+of its own is not in it and cannot be — the server has never heard what it did.
+Deciding that a replica is *gone* is a policy, and not one a version vector can
+make. What the meet gives is the measurement such a policy would have to be worth
+making: whether, in a room actually being used, it advances at all.
+
+### ⛔ A minimum cannot say *who* {#a-minimum-cannot-say-who}
+
+That is a second question, and the meet structurally cannot answer it. Because
+`Stable` is a minimum **over acknowledgers**, a single participant two operations
+behind caps it for every sender except itself — so a breakdown printed per
+*sender* turns one straggler into N faults. [collab#204](https://github.com/go-crdt/collab/issues/204)
+is exactly that: twice on the `arch amd64` lane, at 124 and then 145 of 160
+operations, the report read
+
+```text
+site 1..6: acknowledged up to 18 of 20  <-- behind
+site 7:    acknowledged up to 17 of 20  <-- behind
+site 8:    acknowledged up to 20 of 20
+```
+
+Seven "behind" lines, one lagging acknowledger. Site 8's own operations had
+reached everybody; site 8 was short of everyone else's last two, three of them
+site 7's, which is where the 17 comes from.
+
+⚠ That issue is **still open**, and the distinction matters for anyone reading
+it: what the wrong axis explains is why its *report* was unreadable, not why the
+meet stalled. A clearer breakdown does not cure a stall — it is what makes the
+next occurrence worth reading.
+
+`Server.Acknowledged` (v0.82.0) is that axis: one row per connected participant,
+sorted by site, carrying what it has acknowledged — and `nil` for one that has
+said nothing. ⭐ It is most useful exactly where `Stable` gives up: `Stable`
+returns false while any participant has acknowledged nothing, and that is the
+moment somebody wants to know **which** one. `Acknowledged` returns true and
+names it.
+
+Its own boolean draws a line worth keeping: false means only *the document is not
+open*. An open room with nobody in it is an empty slice and true, because "the
+document is gone" and "the room emptied" are different answers, and a caller
+diagnosing a stall acts differently on each. Like `Stable`, it is a snapshot of
+who is connected at that moment, and a site appears at most once — a rejoin
+displaces the session already holding that identity before the new one is added.
+
 ## Joining, and the direction people forget {#joining-and-the-direction-people-forget}
 
 A `Welcome` carries three things:
