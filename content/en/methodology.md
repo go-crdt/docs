@@ -561,6 +561,25 @@ reproduce its own history:
 
 The inputs that found them are committed, so they run on every build.
 
+"Every decoder is fuzzed" is also a claim a program can now check, and until
+2026-11-20 one could not. `fuzzrun audit` reads the fuzz targets of `crdt` and
+the workflows that run them, and says which targets no workflow fuzzes. Against
+this repository it used to answer **35 targets, 35 uncertain**: twenty targets
+run from a matrix that names the package and the target together, which it only
+half read, and fifteen from a lane whose `-fuzz` pattern a shell loop built,
+which no reader can. Both are fixed — the matrix by the auditor
+([go-fleettools/fuzzrun#15](https://github.com/go-fleettools/fuzzrun/pull/15)),
+the loop by moving that lane onto `fuzzrun run`
+([go-crdt/crdt#185](https://github.com/go-crdt/crdt/pull/185)) once `run` had
+learnt to tell a crash from the fuzz coordinator's own deadline — and it now
+answers **35 targets, 0 without a workflow, 0 uncertain**.
+
+⚠ What that measures is that every target is *named by a step that fuzzes it*,
+not how long each one runs or what it has found; the lane's own summary says
+the second (`21 targets: 21 PASS, 0 FAIL, 0 CRASH, 0 DEADLINE` on the run that
+proved the change), and the corpus it carries between runs grew from 1076
+inputs to 1274 on that run.
+
 ## The end-to-end gate {#the-end-to-end-gate}
 
 Compiling for `js/wasm` proves nothing on its own — plenty of code compiles and
